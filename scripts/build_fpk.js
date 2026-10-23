@@ -8,7 +8,7 @@ const { execSync } = require('child_process');
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DIST_DIR = path.join(ROOT_DIR, 'dist_fpk');
 
-console.log('🚀 [fnOS Builder] Starting MSLFrp .fpk multi-architecture packaging...');
+console.log('[fnOS Builder] Starting MSLFrp .fpk multi-architecture packaging...');
 
 // 1. Ensure cmd files are executable
 execSync(`chmod +x "${path.join(ROOT_DIR, 'cmd')}"/* 2>/dev/null || true`);
@@ -16,14 +16,14 @@ execSync(`chmod +x "${path.join(ROOT_DIR, 'cmd')}"/* 2>/dev/null || true`);
 // 1.1 Ensure frontend is built
 const uiDistIndex = path.join(ROOT_DIR, 'app/ui/dist/index.html');
 if (!fs.existsSync(uiDistIndex)) {
-  console.log('⚡ Frontend dist not found. Compiling frontend now...');
+  console.log('Frontend dist not found. Compiling frontend now...');
   execSync('npm --prefix frontend install && npm --prefix frontend run build', { stdio: 'inherit' });
 }
 
 // 2. Read base manifest
 const manifestPath = path.join(ROOT_DIR, 'manifest');
 if (!fs.existsSync(manifestPath)) {
-  console.error('❌ Error: manifest file not found!');
+  console.error('Error: manifest file not found!');
   process.exit(1);
 }
 
@@ -40,13 +40,13 @@ const overrideVersion = process.env.APP_VERSION || (cliVersionArg ? cliVersionAr
 
 if (overrideVersion) {
   version = overrideVersion.replace(/^v/, '').trim();
-  console.log(`📌 Using target version override: ${version}`);
+  console.log(`Using target version override: ${version}`);
   baseManifest = baseManifest.replace(/^version=.+$/m, `version=${version}`);
 }
 
 const isDev = process.env.DEV_BUILD === 'true' || process.argv.includes('--dev');
 if (isDev) {
-  console.log('🛠️ Dev build mode active');
+  console.log('Dev build mode active');
 }
 
 // 3. Prepare clean dist directory
@@ -72,7 +72,7 @@ execSync(`cp -R "${path.join(ROOT_DIR, 'app/ui')}" "${nestedAppDir}/"`);
 execSync(`cp -R "${path.join(ROOT_DIR, 'app/server')}" "${nestedAppDir}/"`);
 
 const tempAppTgz = path.join(DIST_DIR, 'app.tgz');
-console.log('🗜️ Compressing dual-compatible app payload into app.tgz...');
+console.log('Compressing app payload into app.tgz...');
 execSync(`COPYFILE_DISABLE=1 tar --exclude=".DS_Store" -czf "${tempAppTgz}" -C "${appStaging}" .`);
 
 // Clean temporary staging for app.tgz
@@ -80,7 +80,7 @@ fs.rmSync(appStaging, { recursive: true, force: true });
 
 const appTgzBuffer = fs.readFileSync(tempAppTgz);
 const appTgzMd5 = crypto.createHash('md5').update(appTgzBuffer).digest('hex');
-console.log(`🔒 app.tgz MD5 Checksum: ${appTgzMd5}`);
+console.log(`app.tgz MD5 Checksum: ${appTgzMd5}`);
 
 // Supported matrix
 const TARGETS = [
@@ -92,7 +92,7 @@ const TARGETS = [
 const builtPackages = [];
 
 for (const target of TARGETS) {
-  console.log(`\n📦 Packaging for [${target.name} / platform=${target.platform}]...`);
+  console.log(`\nPackaging for [${target.name} / platform=${target.platform}]...`);
   const stagingDir = path.join(DIST_DIR, `staging_${target.name}`);
   fs.mkdirSync(stagingDir, { recursive: true });
 
@@ -151,14 +151,14 @@ if (isDev) {
   if (primaryPkg) {
     const devFpkName = `${appname}-dev.fpk`;
     fs.copyFileSync(primaryPkg.path, path.join(DIST_DIR, devFpkName));
-    console.log(`💡 Dev package saved as: ${devFpkName}`);
+    console.log(`Dev package saved as: ${devFpkName}`);
   }
 }
 
-console.log('\n🎉 ==============================================');
-console.log(`✅ Build Complete for all target architectures!`);
+console.log('\n==============================================');
+console.log('Build Complete for all target architectures!');
 for (const pkg of builtPackages) {
-  console.log(`📦 [${pkg.target}] ${pkg.name} (${pkg.size} MB)`);
+  console.log(`[${pkg.target}] ${pkg.name} (${pkg.size} MB)`);
 }
-console.log(`📁 Output Directory: ${DIST_DIR}`);
-console.log('=================================================\n');
+console.log(`Output Directory: ${DIST_DIR}`);
+console.log('==============================================\n');
