@@ -145,12 +145,10 @@ for (const target of TARGETS) {
 // Clean temporary app.tgz
 fs.unlinkSync(tempAppTgz);
 
-// Create alias copy for standard package: mslfrp-1.0.0.fpk (using all platform)
-const primaryPkg = builtPackages.find(p => p.target === 'all') || builtPackages[0];
-if (primaryPkg) {
-  const defaultFpkName = `${appname}-${version}.fpk`;
-  fs.copyFileSync(primaryPkg.path, path.join(DIST_DIR, defaultFpkName));
-  if (isDev) {
+// If in dev mode, also create alias: mslfrp-dev.fpk
+if (isDev) {
+  const primaryPkg = builtPackages.find(p => p.target === 'all') || builtPackages[0];
+  if (primaryPkg) {
     const devFpkName = `${appname}-dev.fpk`;
     fs.copyFileSync(primaryPkg.path, path.join(DIST_DIR, devFpkName));
     console.log(`💡 Dev package saved as: ${devFpkName}`);
@@ -162,6 +160,5 @@ console.log(`✅ Build Complete for all target architectures!`);
 for (const pkg of builtPackages) {
   console.log(`📦 [${pkg.target}] ${pkg.name} (${pkg.size} MB)`);
 }
-console.log(`💡 Default universal package saved as: ${appname}-${version}.fpk`);
 console.log(`📁 Output Directory: ${DIST_DIR}`);
 console.log('=================================================\n');
