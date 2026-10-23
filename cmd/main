@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# Prefer system node or fnOS nodejs runtime
+if ! command -v node >/dev/null 2>&1; then
+    BASE_DIR="/var/apps"
+    for node_dir in "${BASE_DIR}/nodejs"*/target/bin "/opt/node/bin"; do
+        if [ -x "${node_dir}/node" ]; then
+            export PATH="${node_dir}:$PATH"
+            break
+        fi
+    done
+fi
+export PATH="/usr/local/bin:/usr/bin:$PATH"
+
+PID_FILE="${TRIM_PKGVAR}/server.pid"
+LOG_FILE="${TRIM_PKGVAR}/logs/server.log"
+SOCKET_FILE="${TRIM_APPDEST}/app.sock"
+
+case "$1" in
+    start)
+        echo "Starting mslfrp backend service..."
+        mkdir -p "${TRIM_PKGVAR}/logs" "${TRIM_PKGVAR}/run" "${TRIM_APPDEST}/bin" "/tmp/mslfrp"
+        
+        # Check if already running
+        if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+            echo "mslfrp backend already running (PID: $(cat "$PID_FILE"))"
+            exit 0
+        fi
+
+        # Remove stale socket
+        rm -f "$SOCKET_FILE"
+
+        # Start Node server listening on Unix socket
+        export SOCKET_PATH="$SOCKET_FILE"
+        export TRIM_APPDEST="$TRIM_APPDEST"
+        export TRIM_PKGVAR="$TRIM_PKGVAR"
+        export GATEWAY_PREFIX="/app/mslfrp"
+
+        SERVER_JS="${TRIM_APPDEST}/server/index.js"
+        if [ ! -f "$SERVER_JS" ] && [ -f "${TRIM_APPDEST}/app/server/index.js" ]; then
+            SERVER_JS="${TRIM_APPDEST}/app/server/index.js"
+        fi
+
+        nohup node "$SERVER_JS" >> "$LOG_FILE" 2>&1 &
+        echo $! > "$PID_FILE"
+
+        # Wait up to 5 seconds for socket to appear
+        for i in {1..10}; do
+            if [ -S "$SOCKET_FILE" ]; then
+                echo "Socket created successfully at $SOCKET_FILE"
+                break
+            fi
+            sleep 0.5
+        done
+
+        exit 0
+        ;;
+    stop)
+        echo "Stopping mslfrp backend service..."
+        if [ -f "$PID_FILE" ]; then
+            kill -TERM "$(cat "$PID_FILE")" 2>/dev/null || true
+            rm -f "$PID_FILE"
+        fi
+        
+        # Remove socket
+        rm -f "$SOCKET_FILE"
+
+        # 1. Stop all active child tunnels recorded in pid files
+        if [ -d "${TRIM_PKGVAR}/run" ]; then
+            for pfile in "${TRIM_PKGVAR}/run"/tunnel_*.pid; do
+                if [ -f "$pfile" ]; then
+                    t_pid=$(cat "$pfile" 2>/dev/null)
+                    if [ -n "$t_pid" ]; then
+                        kill -TERM "$t_pid" 2>/dev/null || true
+                    fi
+                fi
+            done
+        fi
+
+        # 2. Pkill matching processes
+        pkill -TERM -f "tunnel_.*\.toml" 2>/dev/null || true
+        pkill -TERM -f "${TRIM_APPDEST}/bin/frpc" 2>/dev/null || true
+        pkill -TERM -f "/tmp/mslfrp" 2>/dev/null || true
+
+        # 3. Brief grace period, then force kill (-9) any stubborn processes
+        sleep 0.5
+        if [ -d "${TRIM_PKGVAR}/run" ]; then
+            for pfile in "${TRIM_PKGVAR}/run"/tunnel_*.pid; do
+                if [ -f "$pfile" ]; then
+                    t_pid=$(cat "$pfile" 2>/dev/null)
+                    if [ -n "$t_pid" ]; then
+                        kill -9 "$t_pid" 2>/dev/null || true
+                    fi
+                    rm -f "$pfile"
+                fi
+            done
+        fi
+        pkill -9 -f "tunnel_.*\.toml" 2>/dev/null || true
+        pkill -9 -f "${TRIM_APPDEST}/bin/frpc" 2>/dev/null || true
+        pkill -9 -f "/tmp/mslfrp" 2>/dev/null || true
+
+        rm -rf "/tmp/mslfrp" 2>/dev/null || true
+
+        exit 0
+        ;;
+    status)
+        if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+            exit 0
+        fi
+        exit 3
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status}"
+        exit 1
+        ;;
+esac

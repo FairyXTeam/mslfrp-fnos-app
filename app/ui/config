@@ -1,0 +1,14 @@
+{
+  ".url": {
+    "mslfrp.Application": {
+      "title": "MSLFrp 内网映射",
+      "icon": "images/icon_{0}.png",
+      "type": "iframe",
+      "protocol": "",
+      "gatewayPrefix": "/app/mslfrp",
+      "gatewaySocket": "app.sock",
+      "url": "/app/mslfrp",
+      "allUsers": true
+    }
+  }
+}

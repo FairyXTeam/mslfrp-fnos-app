@@ -1,0 +1,19 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build
+dist/
+dist_fpk/
+*.fpk
+app.tgz
+
+# OS
+.DS_Store
+*.pem
+*.log
+.idea/
+.vscode/

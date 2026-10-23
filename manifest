@@ -1,0 +1,14 @@
+appname=mslfrp
+version=1.0.0
+display_name=MSLFrp 内网映射
+desc=MSLFrp 内网映射是由 「<a href="https://user.mslmc.net" target="_blank">FairyXTeam</a>」 (MSL & MSLX 核心开发者) 与 「<a href="https://aff-xicheny.mslmc.net/" target="_blank">广州兮辰云科技有限公司</a>」 联合运营的内网映射服务。提供免费的基础映射节点服务，即开即用；同时提供付费节点等增值服务。(本应用为第三方应用,相关增值内容与飞牛无关)
+source=thirdparty
+platform=all
+maintainer=FairyXTeam
+maintainer_url=https://user.mslmc.net
+distributor=小宇
+distributor_url=https://www.mslmc.cn
+desktop_uidir=ui
+desktop_applaunchname=mslfrp.Application
+ctl_stop=true
+checkport=false

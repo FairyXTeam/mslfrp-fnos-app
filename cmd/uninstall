@@ -1,0 +1,43 @@
+#!/bin/bash
+
+echo "Uninstalling MSL FRP package..."
+
+# 1. Kill any recorded tunnel PIDs from run directory
+if [ -d "${TRIM_PKGVAR}/run" ]; then
+    for pfile in "${TRIM_PKGVAR}/run"/tunnel_*.pid; do
+        if [ -f "$pfile" ]; then
+            pid=$(cat "$pfile" 2>/dev/null)
+            if [ -n "$pid" ]; then
+                kill -TERM "$pid" 2>/dev/null || true
+            fi
+        fi
+    done
+fi
+
+# 2. Pkill any frpc processes associated with mslfrp (by path, config, and temp dir)
+pkill -TERM -f "tunnel_.*\.toml" 2>/dev/null || true
+pkill -TERM -f "${TRIM_APPDEST}/bin/frpc" 2>/dev/null || true
+pkill -TERM -f "/tmp/mslfrp" 2>/dev/null || true
+
+# 3. Allow grace period, then force kill (-9) any stubborn processes
+sleep 0.5
+if [ -d "${TRIM_PKGVAR}/run" ]; then
+    for pfile in "${TRIM_PKGVAR}/run"/tunnel_*.pid; do
+        if [ -f "$pfile" ]; then
+            pid=$(cat "$pfile" 2>/dev/null)
+            if [ -n "$pid" ]; then
+                kill -9 "$pid" 2>/dev/null || true
+            fi
+            rm -f "$pfile"
+        fi
+    done
+fi
+pkill -9 -f "tunnel_.*\.toml" 2>/dev/null || true
+pkill -9 -f "${TRIM_APPDEST}/bin/frpc" 2>/dev/null || true
+pkill -9 -f "/tmp/mslfrp" 2>/dev/null || true
+
+# 4. Remove socket and runtime files
+rm -f "${TRIM_APPDEST}/app.sock"
+rm -rf "/tmp/mslfrp" "${TRIM_PKGVAR}/run" 2>/dev/null || true
+
+exit 0
