@@ -1,7 +1,7 @@
 appname=mslfrp
 version=1.0.0
 display_name=MSLFrp 内网映射
-desc=MSLFrp 内网映射是由「<a href="https://user.mslmc.net" target="_blank">FairyXTeam</a>」(MSL & MSLX 核心开发者) 与「<a href="https://aff-xicheny.mslmc.net/" target="_blank">广州兮辰云科技有限公司</a>」联合运营的内网映射服务。提供免费的基础映射节点服务，即开即用；同时提供付费节点等增值服务。(本应用为第三方应用,相关增值内容与飞牛无关)。<br>注意: 我们的主要服务为MC游戏穿透,严禁穿透违法违规内容和大流量服务。使用中国大陆节点需要完成实名认证哦。
+desc=MSLFrp 内网映射是由「<a href="https://user.mslmc.net" target="_blank">FairyXTeam</a>」(MSL & MSLX 核心开发者) 与「<a href="https://aff-xicheny.mslmc.net/" target="_blank">广州兮辰云科技有限公司</a>」联合运营的内网映射服务。提供免费的基础映射节点服务，即开即用；同时提供付费节点等增值服务。(本应用为第三方应用,相关增值内容与飞牛无关)。<br><br>注意: 我们的主要服务为MC游戏穿透, <b>严禁穿透违法违规内容和大流量服务</b>。使用中国大陆节点前需要完成实名认证哦。
 source=thirdparty
 platform=all
 maintainer=FairyXTeam
