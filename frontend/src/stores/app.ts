@@ -5,7 +5,7 @@ import { get, post, setAuthToken, getAuthToken } from '../api/client';
 export type ThemeMode = 'auto' | 'light' | 'dark';
 
 export const useAppStore = defineStore('app', () => {
-  const currentTab = ref<'tunnels' | 'domains' | 'shop' | 'profile' | 'settings'>('tunnels');
+  const currentTab = ref<'dashboard' | 'tunnels' | 'domains' | 'shop' | 'settings'>('dashboard');
   const themeMode = ref<ThemeMode>('auto');
   const isDarkMode = ref(false);
   const isLoggedIn = ref(false);

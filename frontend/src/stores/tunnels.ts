@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { get, post } from '../api/client';
 import { useAppStore } from './app';
 
@@ -58,6 +58,22 @@ export const useTunnelsStore = defineStore('tunnels', () => {
   const activeLogTunnelId = ref<number | null>(null);
   const autostartIds = ref<number[]>([]);
   const currentFilter = ref<'all' | 'running' | 'stopped' | 'remote'>('all');
+
+  const runningCount = computed(() => {
+    return tunnels.value.filter(t => !!statusMap.value[t.id]?.running).length;
+  });
+
+  const remoteCount = computed(() => {
+    return tunnels.value.filter(t => !statusMap.value[t.id]?.running && t.status === 1).length;
+  });
+
+  const stoppedCount = computed(() => {
+    return tunnels.value.filter(t => !statusMap.value[t.id]?.running && t.status !== 1).length;
+  });
+
+  const activeCount = computed(() => {
+    return runningCount.value + remoteCount.value;
+  });
 
   async function fetchAutostart() {
     try {
@@ -233,6 +249,10 @@ export const useTunnelsStore = defineStore('tunnels', () => {
     activeLogTunnelId,
     autostartIds,
     currentFilter,
+    runningCount,
+    remoteCount,
+    stoppedCount,
+    activeCount,
     fetchNodes,
     fetchTunnels,
     fetchLiveStatuses,

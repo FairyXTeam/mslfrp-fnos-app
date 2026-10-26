@@ -2,12 +2,11 @@
 import { computed } from 'vue';
 import { useAppStore } from '../stores/app';
 import {
+  Squares2X2Icon,
   RocketLaunchIcon,
   GlobeAltIcon,
   ShoppingBagIcon,
-  CreditCardIcon,
   Cog6ToothIcon,
-  UserIcon,
   SunIcon,
   MoonIcon,
   ComputerDesktopIcon,
@@ -18,11 +17,11 @@ import {
 const appStore = useAppStore();
 
 const navItems = [
+  { id: 'dashboard', label: '仪表盘', icon: Squares2X2Icon },
   { id: 'tunnels', label: '全部隧道', icon: RocketLaunchIcon },
   { id: 'domains', label: '免费子域名', icon: GlobeAltIcon },
   { id: 'shop', label: '增值服务', icon: ShoppingBagIcon },
-  { id: 'profile', label: '个人中心', icon: UserIcon },
-  { id: 'settings', label: '客户端设置', icon: Cog6ToothIcon },
+  { id: 'settings', label: '设置', icon: Cog6ToothIcon },
 ];
 
 function handleNav(id: string) {

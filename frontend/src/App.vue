@@ -3,21 +3,20 @@ import { computed, onMounted } from 'vue';
 import { useAppStore } from './stores/app';
 import Sidebar from './components/Sidebar.vue';
 import LoginDialog from './components/LoginDialog.vue';
+import DashboardView from './views/DashboardView.vue';
 import TunnelsView from './views/TunnelsView.vue';
 import DomainsView from './views/DomainsView.vue';
 import ShopView from './views/ShopView.vue';
-import ProfileView from './views/ProfileView.vue';
 import SettingsView from './views/SettingsView.vue';
 import ToastContainer from './components/common/ToastContainer.vue';
 import ConfirmModal from './components/common/ConfirmModal.vue';
 
 import {
+  Squares2X2Icon,
   RocketLaunchIcon,
   GlobeAltIcon,
   ShoppingBagIcon,
-  CreditCardIcon,
   Cog6ToothIcon,
-  UserIcon,
   SunIcon,
   MoonIcon,
   ComputerDesktopIcon
@@ -27,12 +26,12 @@ const appStore = useAppStore();
 
 const currentViewComponent = computed(() => {
   switch (appStore.currentTab) {
+    case 'dashboard': return DashboardView;
     case 'tunnels': return TunnelsView;
     case 'domains': return DomainsView;
     case 'shop': return ShopView;
-    case 'profile': return ProfileView;
     case 'settings': return SettingsView;
-    default: return TunnelsView;
+    default: return DashboardView;
   }
 });
 
@@ -75,6 +74,13 @@ onMounted(() => {
       <!-- Mobile Bottom Navigation Bar -->
       <nav class="md:hidden flex items-center justify-around py-2 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 shrink-0 text-[10px]">
         <button
+          @click="appStore.currentTab = 'dashboard'"
+          :class="['flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-1', appStore.currentTab === 'dashboard' ? 'text-blue-600 font-bold' : 'text-zinc-500']"
+        >
+          <Squares2X2Icon class="w-5 h-5 stroke-[1.8]" />
+          <span>仪表盘</span>
+        </button>
+        <button
           @click="appStore.currentTab = 'tunnels'"
           :class="['flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-1', appStore.currentTab === 'tunnels' ? 'text-blue-600 font-bold' : 'text-zinc-500']"
         >
@@ -94,13 +100,6 @@ onMounted(() => {
         >
           <ShoppingBagIcon class="w-5 h-5 stroke-[1.8]" />
           <span>服务</span>
-        </button>
-        <button
-          @click="appStore.currentTab = 'profile'"
-          :class="['flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-1', appStore.currentTab === 'profile' ? 'text-blue-600 font-bold' : 'text-zinc-500']"
-        >
-          <UserIcon class="w-5 h-5 stroke-[1.8]" />
-          <span>我的</span>
         </button>
         <button
           @click="appStore.currentTab = 'settings'"

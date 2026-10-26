@@ -18,16 +18,18 @@ const props = withDefaults(
     apiUrl: string;
     title?: string;
     subtitle?: string;
-    height?: number;
+    height?: number | string;
     compact?: boolean;
     hideHeader?: boolean;
+    showMonthBtn?: boolean;
   }>(),
   {
     title: '流量趋势分析',
     subtitle: '实时与历史网络传输量监控',
     height: 220,
     compact: false,
-    hideHeader: false
+    hideHeader: false,
+    showMonthBtn: true
   }
 );
 
@@ -62,8 +64,13 @@ const maxTrafficValue = computed(() => {
 });
 
 // SVG Chart Geometry
+const chartHeight = computed(() => {
+  if (typeof props.height === 'number') return props.height;
+  const parsed = parseInt(String(props.height), 10);
+  return isNaN(parsed) ? 220 : parsed;
+});
 const svgWidth = 800;
-const svgHeight = computed(() => props.height);
+const svgHeight = computed(() => chartHeight.value);
 const paddingX = 40;
 const paddingY = 25;
 
@@ -317,7 +324,7 @@ onMounted(() => {
         <svg
           :viewBox="`0 0 ${svgWidth} ${svgHeight}`"
           class="w-full overflow-visible cursor-crosshair"
-          :style="{ height: `${height}px` }"
+          :style="{ height: `${chartHeight}px` }"
           preserveAspectRatio="none"
           @mousemove="handleMouseMove"
           @mouseleave="handleMouseLeave"

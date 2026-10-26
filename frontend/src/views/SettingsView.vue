@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { toast } from '../utils/toast';
+import { confirmModal } from '../utils/confirm';
 import { get, post, getAuthToken } from '../api/client';
 import { useAppStore } from '../stores/app';
 import { useTunnelsStore } from '../stores/tunnels';
@@ -9,12 +10,18 @@ import {
   KeyIcon,
   ArrowPathIcon,
   BoltIcon,
-  CheckIcon
+  CheckIcon,
+  GlobeAltIcon,
+  PlusIcon,
+  TrashIcon,
+  ClipboardDocumentIcon,
+  InformationCircleIcon
 } from '@heroicons/vue/24/outline';
 
 const appStore = useAppStore();
 const tunnelsStore = useTunnelsStore();
 
+// --- 1. frpc Core Info ---
 const frpcInfo = ref<{ installed: boolean; arch: string; path: string }>({
   installed: false,
   arch: 'amd64',
@@ -23,13 +30,90 @@ const frpcInfo = ref<{ installed: boolean; arch: string; path: string }>({
 const checkingFrpc = ref(false);
 const downloadingFrpc = ref(false);
 
-onMounted(async () => {
-  await fetchFrpcInfo();
-  if (tunnelsStore.tunnels.length === 0) {
-    await tunnelsStore.fetchTunnels();
-  } else {
-    await tunnelsStore.fetchAutostart();
+// --- 2. Domain Whitelist ---
+interface WhitelistDomain {
+  id: number;
+  domain: string;
+}
+
+const whitelist = ref<WhitelistDomain[]>([]);
+const loadingWhitelist = ref(false);
+const newDomainInput = ref('');
+const addingDomain = ref(false);
+
+async function fetchWhitelist() {
+  loadingWhitelist.value = true;
+  try {
+    const res = await get('/api/frp/getWhiteListDomain');
+    if (res && res.code === 200 && Array.isArray(res.data)) {
+      whitelist.value = res.data;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch domain whitelist:', err);
+  } finally {
+    loadingWhitelist.value = false;
   }
+}
+
+async function handleAddDomain() {
+  const domain = newDomainInput.value.trim().toLowerCase();
+  if (!domain) {
+    toast.warning('请输入有效的根域名');
+    return;
+  }
+
+  addingDomain.value = true;
+  try {
+    const res = await post('/api/frp/addWhiteListDomain', { domain });
+    if (res && res.code === 200) {
+      toast.success('域名添加白名单成功！');
+      newDomainInput.value = '';
+      await fetchWhitelist();
+    } else {
+      toast.error(res?.msg || '添加白名单失败');
+    }
+  } catch (err: any) {
+    toast.error(err.message || '添加失败');
+  } finally {
+    addingDomain.value = false;
+  }
+}
+
+async function handleDeleteDomain(item: WhitelistDomain) {
+  const confirmed = await confirmModal({
+    title: '移除域名白名单',
+    message: `确定要将域名 "${item.domain}" 从白名单中移除吗？`,
+    confirmText: '确定移除',
+    cancelText: '取消',
+    type: 'danger'
+  });
+
+  if (!confirmed) return;
+
+  try {
+    const res = await post('/api/frp/deleteWhiteListDomain', { id: item.id });
+    if (res && res.code === 200) {
+      toast.success('域名已从白名单移除');
+      await fetchWhitelist();
+    } else {
+      toast.error(res?.msg || '移除失败');
+    }
+  } catch (err: any) {
+    toast.error(err.message || '移除请求异常');
+  }
+}
+
+function copyDomain(domain: string) {
+  navigator.clipboard.writeText(domain);
+  toast.success(`域名 ${domain} 已复制到剪贴板`);
+}
+
+onMounted(async () => {
+  await Promise.all([
+    fetchFrpcInfo(),
+    fetchWhitelist(),
+    tunnelsStore.tunnels.length === 0 ? tunnelsStore.fetchTunnels() : tunnelsStore.fetchAutostart()
+  ]);
 });
 
 async function handleToggleAutostart(id: number) {
@@ -77,23 +161,23 @@ function handleReLogin() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8">
+  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8 select-none">
     <!-- Header -->
     <div class="flex items-start sm:items-center justify-between gap-3 mb-5 sm:mb-6">
       <div class="flex-1 min-w-0">
-        <h1 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white tracking-tight m-0">客户端与系统设置</h1>
+        <h1 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white tracking-tight m-0">系统设置</h1>
         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 m-0 leading-relaxed">
-          管理本地 frpc 核心运行时、飞牛网关集成以及 MSL 账户凭证。
+          管理本地 frpc 核心运行时、账户凭证授权、开机自启策略以及自定义域名白名单。
         </p>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 pb-12">
       <!-- 1. frpc Core Status -->
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-6 shadow-sm flex flex-col justify-between gap-5">
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-5">
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
               <Cog6ToothIcon class="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
@@ -102,7 +186,7 @@ function handleReLogin() {
             </div>
           </div>
 
-          <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 flex flex-col gap-2 text-xs">
+          <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 flex flex-col gap-2.5 text-xs">
             <div class="flex items-center justify-between">
               <span class="text-zinc-500">检测到宿主架构:</span>
               <span class="font-mono font-bold text-zinc-900 dark:text-white uppercase">{{ frpcInfo.arch }} (Linux)</span>
@@ -124,17 +208,17 @@ function handleReLogin() {
         <button
           @click="handleDownloadFrpc"
           :disabled="downloadingFrpc"
-          class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer border-0 shadow-sm transition-colors text-center disabled:opacity-50"
+          class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer border-0 shadow-xs transition-colors text-center disabled:opacity-50"
         >
           {{ downloadingFrpc ? '正在从 MSL 下载核心...' : (frpcInfo.installed ? '重新下载 / 强制更新核心' : '立即下载 frpc 核心') }}
         </button>
       </div>
 
       <!-- 2. Account & Token Management -->
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-6 shadow-sm flex flex-col justify-between gap-5">
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-5">
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <KeyIcon class="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
@@ -187,10 +271,10 @@ function handleReLogin() {
       </div>
 
       <!-- 3. Tunnel Autostart Management -->
-      <div class="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-6 shadow-sm flex flex-col gap-4">
+      <div class="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-5 sm:p-6 shadow-xs flex flex-col gap-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
               <BoltIcon class="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
@@ -236,6 +320,95 @@ function handleReLogin() {
             >
               <CheckIcon class="w-4 h-4 stroke-[3] text-white" />
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. 自定义域名白名单 (Domain Whitelist - Migrated from Profile as requested) -->
+      <div class="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-5 sm:p-6 shadow-xs flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <GlobeAltIcon class="w-5 h-5 stroke-[1.8]" />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-zinc-900 dark:text-white m-0">自定义域名白名单</h3>
+              <p class="text-xs text-zinc-400 m-0 mt-0.5">绑定属于您自己的独立域名，添加后可在 HTTP / HTTPS 映射隧道中自由绑定子域名</p>
+            </div>
+          </div>
+          <span class="text-xs font-medium text-zinc-500">
+            已添加 {{ whitelist.length }} 个域名
+          </span>
+        </div>
+
+        <!-- Add Domain Input Box -->
+        <div class="flex items-center gap-2 pt-1">
+          <input
+            v-model="newDomainInput"
+            type="text"
+            placeholder="输入您的根域名，如 example.com (无需包含 http/https)"
+            @keyup.enter="handleAddDomain"
+            class="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 text-xs text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-hidden focus:border-blue-500 transition-colors"
+          />
+          <button
+            @click="handleAddDomain"
+            :disabled="addingDomain || !newDomainInput.trim()"
+            class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer border-0 shadow-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 shrink-0"
+          >
+            <PlusIcon class="w-4 h-4 stroke-[2.5]" />
+            <span>{{ addingDomain ? '添加中...' : '添加域名' }}</span>
+          </button>
+        </div>
+
+        <!-- Whitelist Domains Grid -->
+        <div v-if="loadingWhitelist" class="py-8 text-center text-xs text-zinc-400">
+          <div class="w-5 h-5 border-2 border-zinc-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
+          正在加载域名白名单...
+        </div>
+
+        <div v-else-if="whitelist.length === 0" class="py-6 text-center text-xs text-zinc-400">
+          暂无已添加的白名单域名。请在上方输入框中输入您的主根域名（如 mynas.com）并点击“添加域名”。
+        </div>
+
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+          <div
+            v-for="item in whitelist"
+            :key="item.id"
+            class="p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 flex items-center justify-between gap-2"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <GlobeAltIcon class="w-4 h-4 text-purple-500 shrink-0" />
+              <span class="font-mono text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate" :title="item.domain">
+                {{ item.domain }}
+              </span>
+            </div>
+
+            <div class="flex items-center gap-1 shrink-0">
+              <button
+                @click="copyDomain(item.domain)"
+                class="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60 border-0 bg-transparent cursor-pointer transition-colors"
+                title="复制域名"
+              >
+                <ClipboardDocumentIcon class="w-3.5 h-3.5" />
+              </button>
+              <button
+                @click="handleDeleteDomain(item)"
+                class="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 border-0 bg-transparent cursor-pointer transition-colors"
+                title="从白名单中删除"
+              >
+                <TrashIcon class="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DNS Guidelines Notice -->
+        <div class="bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 p-3 rounded-xl text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+          <div class="flex items-start gap-1.5">
+            <InformationCircleIcon class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+            <div>
+              <strong>域名解析提示：</strong>添加根域名白名单后，请在您的域名 DNS 解析商（如阿里云、腾讯云、Cloudflare 等）将二级域名（如 <code>nas.example.com</code>）通过 <strong>CNAME</strong> 记录指向您所选穿透节点的域名，即可在新建/绑定 HTTP 隧道时生效。
+            </div>
           </div>
         </div>
       </div>
