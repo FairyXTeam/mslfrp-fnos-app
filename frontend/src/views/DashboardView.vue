@@ -24,8 +24,7 @@ import {
   BoltIcon,
   ArrowTrendingUpIcon,
   ChatBubbleLeftRightIcon,
-  MegaphoneIcon,
-  ArrowsPointingOutIcon
+  MegaphoneIcon
 } from '@heroicons/vue/24/outline';
 
 const appStore = useAppStore();
@@ -215,7 +214,7 @@ async function fetchNotice(manual = false) {
         const lastHash = cfg?.lastNoticeHash;
 
         if (manual) {
-          toast.success('公告已更新');
+          toast.success('服务动态已更新');
         } else if (hash !== lastHash) {
           // Announcement updated or never seen before
           if (appStore.showLoginDialog) {
@@ -227,12 +226,12 @@ async function fetchNotice(manual = false) {
         }
       }
     } else if (manual) {
-      toast.info('暂无最新公告');
+      toast.info('暂无最新服务动态');
     }
   } catch (err: any) {
     console.error('Fetch notice error:', err);
     if (manual) {
-      toast.error('获取公告失败');
+      toast.error('获取服务动态失败');
     }
   } finally {
     noticeLoading.value = false;
@@ -469,7 +468,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- 3.5. 仪表盘最新公告卡片 (6个数据卡片正下方) -->
+      <!-- 3.5. 仪表盘服务动态卡片 (6个数据卡片正下方) -->
       <div class="p-5 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs flex flex-col gap-3 transition-colors">
         <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800/80">
           <div class="flex items-center gap-2.5">
@@ -478,26 +477,17 @@ onMounted(async () => {
             </div>
             <div>
               <h3 class="text-sm font-bold text-zinc-900 dark:text-white m-0">
-                系统公告
+                服务动态
               </h3>
             </div>
           </div>
 
           <div class="flex items-center gap-1.5">
             <button
-              v-if="noticeContent"
-              @click="showNoticeModal = true"
-              class="px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
-              title="弹窗浏览"
-            >
-              <ArrowsPointingOutIcon class="w-3.5 h-3.5 text-zinc-400" />
-              <span class="hidden sm:inline">弹窗浏览</span>
-            </button>
-            <button
               @click="fetchNotice(true)"
               :disabled="noticeLoading"
               class="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-colors cursor-pointer disabled:opacity-50"
-              title="刷新公告"
+              title="刷新动态"
             >
               <ArrowPathIcon class="w-3.5 h-3.5" :class="{ 'animate-spin': noticeLoading }" />
             </button>
@@ -507,13 +497,13 @@ onMounted(async () => {
         <!-- Card Body -->
         <div v-if="noticeLoading && !noticeContent" class="py-6 flex items-center justify-center text-xs text-zinc-400 gap-2">
           <ArrowPathIcon class="w-4 h-4 animate-spin text-blue-500" />
-          <span>正在加载最新公告...</span>
+          <span>正在加载服务动态...</span>
         </div>
         <div v-else-if="noticeContent" class="text-xs">
           <MarkdownPreview :content="noticeContent" editor-id="fnos-notice-dashboard" />
         </div>
         <div v-else class="py-6 text-center text-xs text-zinc-400">
-          暂无最新公告
+          暂无最新动态
         </div>
       </div>
 
@@ -638,10 +628,10 @@ onMounted(async () => {
     <!-- Ad Reward (Earn Points) WeChat Modal -->
     <AdRewardModal v-model="showAdRewardModal" />
 
-    <!-- Notice Popup Modal (弹窗公告 - 登录弹窗优先级高于公告，内容不变只弹一次) -->
+    <!-- Notice Popup Modal (弹窗 - 登录弹窗优先级高于服务动态，内容不变只弹一次) -->
     <BaseModal
       v-model="showNoticeModal"
-      title="系统公告"
+      title="服务动态"
       max-width="max-w-xl"
     >
       <div class="max-h-[60vh] overflow-y-auto py-1 pr-1">
@@ -651,7 +641,7 @@ onMounted(async () => {
           editor-id="fnos-notice-popup"
         />
         <div v-else class="py-8 text-center text-xs text-zinc-400">
-          暂无公告内容
+          暂无动态内容
         </div>
       </div>
 
