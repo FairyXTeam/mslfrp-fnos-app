@@ -15,7 +15,8 @@ import {
   PlusIcon,
   TrashIcon,
   ClipboardDocumentIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  PaintBrushIcon
 } from '@heroicons/vue/24/outline';
 
 const appStore = useAppStore();
@@ -173,6 +174,92 @@ function handleReLogin() {
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 pb-12">
+      <!-- 0. 外观主题与框架风格 (Appearance & Layout Theme) -->
+      <div class="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-5 sm:p-6 shadow-xs flex flex-col gap-4">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <PaintBrushIcon class="w-5 h-5 stroke-[1.8]" />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-zinc-900 dark:text-white m-0">外观与框架主题</h3>
+              <p class="text-xs text-zinc-400 m-0 mt-0.5">选择应用的窗口呈现形态，并可自由在 MSL 原生与飞牛官方原生规范之间无缝切换</p>
+            </div>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 shrink-0">
+            当前: {{ appStore.layoutTheme === 'fnos' ? 'fnOS 飞牛原生' : 'MSLFrp Native' }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+          <!-- Option 1: fnOS Native (Default) -->
+          <div
+            @click="appStore.setLayoutTheme('fnos')"
+            :class="[
+              'p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-3 relative select-none',
+              appStore.layoutTheme === 'fnos'
+                ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-950/20 shadow-xs'
+                : 'border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-800/30 hover:border-zinc-300 dark:hover:border-zinc-700'
+            ]"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex flex-col gap-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-bold text-zinc-900 dark:text-white">fnOS 飞牛原生</span>
+                </div>
+                <p class="text-xs text-zinc-500 dark:text-zinc-400 m-0 leading-relaxed">
+                  飞牛系统原生卡片式嵌入框架，与飞牛桌面窗口风格高度融合，轻量简洁。
+                </p>
+              </div>
+              <div
+                :class="[
+                  'w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-colors',
+                  appStore.layoutTheme === 'fnos' ? 'bg-blue-600 text-white' : 'border border-zinc-300 dark:border-zinc-600'
+                ]"
+              >
+                <CheckIcon v-if="appStore.layoutTheme === 'fnos'" class="w-3.5 h-3.5 stroke-[3]" />
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-[11px] text-zinc-400 dark:text-zinc-500 pt-2 border-t border-zinc-200/60 dark:border-zinc-800/80">
+              <span>特性: 飞牛桌面融合 · 悬浮圆角卡片 · 原生设计</span>
+            </div>
+          </div>
+
+          <!-- Option 2: MSLFrp Native -->
+          <div
+            @click="appStore.setLayoutTheme('native')"
+            :class="[
+              'p-4 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-3 relative select-none',
+              appStore.layoutTheme === 'native'
+                ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-950/20 shadow-xs'
+                : 'border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-800/30 hover:border-zinc-300 dark:hover:border-zinc-700'
+            ]"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex flex-col gap-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-bold text-zinc-900 dark:text-white">MSLFrp 经典原生</span>
+                </div>
+                <p class="text-xs text-zinc-500 dark:text-zinc-400 m-0 leading-relaxed">
+                  独立客户端沉浸式全宽布局，保留完整品牌标识栏与宽版导航卡，适合全屏浏览。
+                </p>
+              </div>
+              <div
+                :class="[
+                  'w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-colors',
+                  appStore.layoutTheme === 'native' ? 'bg-blue-600 text-white' : 'border border-zinc-300 dark:border-zinc-600'
+                ]"
+              >
+                <CheckIcon v-if="appStore.layoutTheme === 'native'" class="w-3.5 h-3.5 stroke-[3]" />
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-[11px] text-zinc-400 dark:text-zinc-500 pt-2 border-t border-zinc-200/60 dark:border-zinc-800/80">
+              <span>特性: 沉浸式侧边栏 · 完整应用标识 · 全宽视图</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 1. frpc Core Status -->
       <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-5">
         <div class="flex flex-col gap-4">

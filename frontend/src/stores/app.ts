@@ -3,10 +3,12 @@ import { ref, computed } from 'vue';
 import { get, post, setAuthToken, getAuthToken } from '../api/client';
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
+export type LayoutTheme = 'native' | 'fnos';
 
 export const useAppStore = defineStore('app', () => {
   const currentTab = ref<'dashboard' | 'tunnels' | 'domains' | 'shop' | 'settings'>('dashboard');
   const themeMode = ref<ThemeMode>('auto');
+  const layoutTheme = ref<LayoutTheme>('fnos');
   const isDarkMode = ref(false);
   const isLoggedIn = ref(false);
   const showLoginDialog = ref(false);
@@ -38,6 +40,20 @@ export const useAppStore = defineStore('app', () => {
   const isRealNamed = computed(() => {
     return !!userInfo.value.realName;
   });
+
+  function setLayoutTheme(theme: LayoutTheme) {
+    layoutTheme.value = theme;
+    localStorage.setItem('msl_layout_theme', theme);
+  }
+
+  function initLayoutTheme() {
+    const saved = localStorage.getItem('msl_layout_theme') as LayoutTheme | null;
+    if (saved === 'fnos' || saved === 'native') {
+      layoutTheme.value = saved;
+    } else {
+      layoutTheme.value = 'fnos';
+    }
+  }
 
   function applyTheme(dark: boolean) {
     isDarkMode.value = dark;
@@ -90,6 +106,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function initTheme() {
+    initLayoutTheme();
     const saved = localStorage.getItem('msl_theme') as ThemeMode | null;
     const mode: ThemeMode = (saved === 'dark' || saved === 'light' || saved === 'auto') ? saved : 'auto';
     setThemeMode(mode);
@@ -263,6 +280,9 @@ export const useAppStore = defineStore('app', () => {
   return {
     currentTab,
     themeMode,
+    layoutTheme,
+    setLayoutTheme,
+    initLayoutTheme,
     isDarkMode,
     isLoggedIn,
     showLoginDialog,
