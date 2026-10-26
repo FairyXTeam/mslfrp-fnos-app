@@ -26,12 +26,22 @@ const currentTunnel = computed(() => {
   return tunnelsStore.tunnels.find(t => t.id === props.tunnelId);
 });
 
+function maskLogContent(text: string): string {
+  if (!text) return '';
+  return text.replace(/([a-zA-Z0-9_-]{8,64})(?=-\d+\.[a-zA-Z0-9_\-\.]+)/g, (match, token) => {
+    if (token.length > 6) {
+      return `${token.slice(0, 3)}*****${token.slice(-3)}`;
+    }
+    return '*****';
+  });
+}
+
 async function fetchLogs() {
   if (!props.tunnelId) return;
   try {
     const res = await get('/api/local/tunnel/logs', { id: props.tunnelId, lines: 200 });
     if (res && res.code === 200) {
-      logs.value = res.data?.logs || '暂无运行日志输出。';
+      logs.value = maskLogContent(res.data?.logs || '暂无运行日志输出。');
       if (autoScroll.value) {
         nextTick(() => {
           if (logContainerRef.value) {
@@ -63,8 +73,9 @@ onUnmounted(() => {
 });
 
 function copyLogs() {
-  navigator.clipboard.writeText(logs.value).then(() => {
-    toast.success('完整日志已复制到剪贴板');
+  const masked = maskLogContent(logs.value);
+  navigator.clipboard.writeText(masked).then(() => {
+    toast.success('完整日志已复制到剪贴板（Token已自动打码脱敏）');
   });
 }
 

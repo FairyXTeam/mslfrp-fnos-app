@@ -150,13 +150,13 @@ async function handleRefresh() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8">
-    <!-- Header (Matching Feiniu Native Style with Subtitle) -->
-    <div class="shrink-0 flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
+  <div class="flex flex-col h-full overflow-y-auto p-2 sm:p-3 md:p-4">
+    <!-- Header Card (Matching Reference Card Style) -->
+    <div class="shrink-0 p-4 sm:p-5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs mb-4 sm:mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2.5">
-          <h1 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white tracking-tight m-0 truncate">全部隧道</h1>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-zinc-200/70 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 font-semibold shrink-0">
+          <h1 class="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tracking-tight m-0 truncate">全部隧道</h1>
+          <span class="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 font-semibold shrink-0">
             {{ tunnelsStore.tunnels.length }} 条
           </span>
         </div>
@@ -168,7 +168,7 @@ async function handleRefresh() {
       <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
         <button
           @click="handleRefresh"
-          class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center justify-center cursor-pointer shadow-sm transition-colors shrink-0"
+          class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center justify-center cursor-pointer shadow-2xs transition-colors shrink-0"
           title="刷新列表"
         >
           <ArrowPathIcon class="w-4 h-4" />
@@ -177,7 +177,7 @@ async function handleRefresh() {
         <!-- Primary Action Button: Blue button with white + icon -->
         <button
           @click="handleCreate"
-          class="px-3 py-2 sm:px-4 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white text-xs sm:text-sm font-semibold shadow-sm flex items-center gap-1.5 cursor-pointer border-0 transition-all shrink-0 whitespace-nowrap"
+          class="px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white text-xs sm:text-sm font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer border-0 transition-all shrink-0 whitespace-nowrap"
         >
           <PlusIcon class="w-4 h-4 stroke-[2.5]" />
           <span>创建隧道</span>

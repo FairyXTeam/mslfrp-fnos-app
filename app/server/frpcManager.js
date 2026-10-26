@@ -493,6 +493,17 @@ class FrpcManager {
     return statusMap;
   }
 
+  maskLogContent(text) {
+    if (!text || typeof text !== 'string') return '';
+    // Mask user token before -<uid>.<tunnel_name>, keeping first 3 and last 3 characters
+    return text.replace(/([a-zA-Z0-9_-]{8,64})(?=-\d+\.[a-zA-Z0-9_\-\.]+)/g, (match, token) => {
+      if (token.length > 6) {
+        return `${token.slice(0, 3)}*****${token.slice(-3)}`;
+      }
+      return '*****';
+    });
+  }
+
   getTunnelLogs(pkgVar, tunnelId, maxLines = 100) {
     const numericId = Number(tunnelId);
     if (!Number.isInteger(numericId) || numericId <= 0) {
@@ -505,7 +516,8 @@ class FrpcManager {
     try {
       const content = fs.readFileSync(logFile, 'utf8');
       const lines = content.split('\n');
-      return lines.slice(-maxLines).join('\n');
+      const sliced = lines.slice(-maxLines).join('\n');
+      return this.maskLogContent(sliced);
     } catch (e) {
       return `读取日志错误: ${e.message}`;
     }

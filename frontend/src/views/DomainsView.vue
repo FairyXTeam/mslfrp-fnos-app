@@ -183,23 +183,25 @@ function formatSrvDisplay(name: string, domain: string) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8">
-    <!-- Header -->
-    <div class="flex items-start sm:items-center justify-between gap-3 mb-5 sm:mb-6">
+  <div class="flex flex-col h-full overflow-y-auto p-2 sm:p-3 md:p-4">
+    <!-- Header Card (Matching Reference Card Style) -->
+    <div class="shrink-0 p-4 sm:p-5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs mb-4 sm:mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="flex-1 min-w-0">
-        <h1 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white tracking-tight m-0">免费子域名管理</h1>
+        <h1 class="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tracking-tight m-0">免费子域名管理</h1>
         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 m-0 leading-relaxed">
           绑定公网免费子域名，支持我的世界 SRV 免填端口直连与通用 A/CNAME 解析。
         </p>
       </div>
 
-      <button
-        @click="dialogVisible = true"
-        class="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-[#0066ff] hover:bg-[#0055ee] active:scale-[0.99] text-white text-xs sm:text-sm font-medium shadow-sm flex items-center gap-1.5 cursor-pointer border-0 transition-all shrink-0 whitespace-nowrap mt-0.5 sm:mt-0"
-      >
-        <PlusIcon class="w-4 h-4 stroke-[2.5]" />
-        <span>添加子域名</span>
-      </button>
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          @click="dialogVisible = true"
+          class="px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white text-xs sm:text-sm font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer border-0 transition-all shrink-0 whitespace-nowrap"
+        >
+          <PlusIcon class="w-4 h-4 stroke-[2.5]" />
+          <span>添加子域名</span>
+        </button>
+      </div>
     </div>
 
     <!-- Records List -->

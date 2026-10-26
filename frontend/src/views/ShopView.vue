@@ -255,25 +255,25 @@ function startPollingOrder(orderNo: string) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-6">
+  <div class="flex flex-col h-full overflow-y-auto p-2 sm:p-3 md:p-4">
+    <!-- Header Card (Matching Reference Card Style) -->
+    <div class="shrink-0 p-4 sm:p-5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs mb-4 sm:mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="flex-1 min-w-0">
-        <h1 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white tracking-tight m-0">增值服务</h1>
+        <h1 class="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tracking-tight m-0">增值服务</h1>
         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 m-0 leading-relaxed">
           升级服务特权、扩增隧道上限、增加高速流量额度及在线账户充值。
         </p>
       </div>
 
       <!-- Live Balance Card with Quick Action -->
-      <div class="flex items-center self-start sm:self-auto gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-amber-900 dark:text-amber-300 text-xs shrink-0 whitespace-nowrap mt-0.5 sm:mt-0">
+      <div class="flex items-center self-start sm:self-auto gap-2 px-3.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-amber-900 dark:text-amber-300 text-xs shrink-0 whitespace-nowrap">
         <span>当前余额:</span>
         <span class="font-bold text-sm">{{ appStore.userInfo.score }}</span>
         <span class="text-xs opacity-75">积分</span>
         <button
           v-if="subTab !== 'recharge'"
           @click="subTab = 'recharge'"
-          class="ml-1 px-2 py-0.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-[11px] border-0 cursor-pointer shadow-xs transition-colors"
+          class="ml-1 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-[11px] border-0 cursor-pointer shadow-xs transition-colors"
         >
           充值
         </button>

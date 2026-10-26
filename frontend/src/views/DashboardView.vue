@@ -189,7 +189,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8 select-none">
+  <div class="flex flex-col h-full overflow-y-auto p-2 sm:p-3 md:p-4 select-none">
     <div class="flex flex-col gap-4 sm:gap-5 pb-12">
       <!-- 1. 欢迎 Banner (Matching Image 1: Avatar + Greeting + Real-name Badge + Weather + Earn Points Button) -->
       <div class="relative w-full p-4 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 overflow-hidden">

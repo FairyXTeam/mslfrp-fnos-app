@@ -161,11 +161,11 @@ function handleReLogin() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8 select-none">
-    <!-- Header -->
-    <div class="flex items-start sm:items-center justify-between gap-3 mb-5 sm:mb-6">
+  <div class="flex flex-col h-full overflow-y-auto p-2 sm:p-3 md:p-4 select-none">
+    <!-- Header Card (Matching Reference Card Style) -->
+    <div class="shrink-0 p-4 sm:p-5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-2xs mb-4 sm:mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="flex-1 min-w-0">
-        <h1 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white tracking-tight m-0">系统设置</h1>
+        <h1 class="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tracking-tight m-0">系统设置</h1>
         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 m-0 leading-relaxed">
           管理本地 frpc 核心运行时、账户凭证授权、开机自启策略以及自定义域名白名单。
         </p>
