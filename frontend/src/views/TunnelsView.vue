@@ -152,7 +152,7 @@ async function handleRefresh() {
 <template>
   <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8">
     <!-- Header (Matching Feiniu Native Style with Subtitle) -->
-    <div class="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
+    <div class="shrink-0 flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2.5">
           <h1 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white tracking-tight m-0 truncate">全部隧道</h1>
@@ -186,18 +186,18 @@ async function handleRefresh() {
     </div>
 
     <!-- Tabs Segmented Filter (全部 / 已启动 / 未启动 / 远端启动) -->
-    <div v-if="tunnelsStore.tunnels.length > 0" class="flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 w-full sm:w-fit mb-5 text-xs border border-zinc-200/60 dark:border-zinc-700/50 overflow-x-auto no-scrollbar">
+    <div v-if="tunnelsStore.tunnels.length > 0" class="shrink-0 flex items-center gap-1.5 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 w-full sm:w-fit mb-4 text-xs border border-zinc-200/60 dark:border-zinc-700/50 overflow-x-auto no-scrollbar">
       <button
         @click="currentFilter = 'all'"
         :class="[
-          'h-8 px-3 sm:px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none shrink-0',
+          'px-3 py-1.5 rounded-lg font-medium cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0',
           currentFilter === 'all'
-            ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 shadow-xs'
+            ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 font-semibold shadow-xs'
             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 bg-transparent'
         ]"
       >
         <span>全部</span>
-        <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono leading-none flex items-center justify-center" :class="currentFilter === 'all' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'">
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono flex items-center justify-center shrink-0" :class="currentFilter === 'all' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'">
           {{ tunnelsStore.tunnels.length }}
         </span>
       </button>
@@ -205,15 +205,15 @@ async function handleRefresh() {
       <button
         @click="currentFilter = 'running'"
         :class="[
-          'h-8 px-3 sm:px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none shrink-0',
+          'px-3 py-1.5 rounded-lg font-medium cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0',
           currentFilter === 'running'
-            ? 'bg-white dark:bg-zinc-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
+            ? 'bg-white dark:bg-zinc-900 text-emerald-600 dark:text-emerald-400 font-semibold shadow-xs'
             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 bg-transparent'
         ]"
       >
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
         <span>已启动</span>
-        <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono leading-none flex items-center justify-center" :class="currentFilter === 'running' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'">
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono flex items-center justify-center shrink-0" :class="currentFilter === 'running' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'">
           {{ runningCount }}
         </span>
       </button>
@@ -221,15 +221,15 @@ async function handleRefresh() {
       <button
         @click="currentFilter = 'stopped'"
         :class="[
-          'h-8 px-3 sm:px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none shrink-0',
+          'px-3 py-1.5 rounded-lg font-medium cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0',
           currentFilter === 'stopped'
-            ? 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-xs'
+            ? 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 font-semibold shadow-xs'
             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 bg-transparent'
         ]"
       >
         <span class="w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0"></span>
         <span>未启动</span>
-        <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono leading-none flex items-center justify-center" :class="currentFilter === 'stopped' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'">
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono flex items-center justify-center shrink-0" :class="currentFilter === 'stopped' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'">
           {{ stoppedCount }}
         </span>
       </button>
@@ -237,15 +237,15 @@ async function handleRefresh() {
       <button
         @click="currentFilter = 'remote'"
         :class="[
-          'h-8 px-3 sm:px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none shrink-0',
+          'px-3 py-1.5 rounded-lg font-medium cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap select-none shrink-0',
           currentFilter === 'remote'
-            ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 shadow-xs'
+            ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 font-semibold shadow-xs'
             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 bg-transparent'
         ]"
       >
         <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0"></span>
         <span>远端启动</span>
-        <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono leading-none flex items-center justify-center" :class="currentFilter === 'remote' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'">
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full font-mono flex items-center justify-center shrink-0" :class="currentFilter === 'remote' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'">
           {{ remoteCount }}
         </span>
       </button>
@@ -274,8 +274,8 @@ async function handleRefresh() {
       </button>
     </div>
 
-    <!-- Tunnel Cards Grid -->
-    <div v-else-if="filteredTunnels.length > 0" class="grid grid-cols-1 xl:grid-cols-2 gap-4 pb-12">
+    <!-- Tunnel Cards Grid (Fluid auto-fill: min 500px ensures single column on smaller/medium windows, 2+ columns on wide displays) -->
+    <div v-else-if="filteredTunnels.length > 0" class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,500px),1fr))] gap-4 sm:gap-5 pb-12">
       <TunnelCard
         v-for="tunnel in filteredTunnels"
         :key="tunnel.id"

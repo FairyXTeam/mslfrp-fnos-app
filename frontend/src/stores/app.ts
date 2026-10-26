@@ -2,8 +2,11 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { get, post, setAuthToken, getAuthToken } from '../api/client';
 
+export type ThemeMode = 'auto' | 'light' | 'dark';
+
 export const useAppStore = defineStore('app', () => {
   const currentTab = ref<'tunnels' | 'domains' | 'shop' | 'profile' | 'settings'>('tunnels');
+  const themeMode = ref<ThemeMode>('auto');
   const isDarkMode = ref(false);
   const isLoggedIn = ref(false);
   const showLoginDialog = ref(false);
@@ -36,20 +39,91 @@ export const useAppStore = defineStore('app', () => {
     return !!userInfo.value.realName;
   });
 
-  function setTheme(dark: boolean) {
+  function applyTheme(dark: boolean) {
     isDarkMode.value = dark;
     if (dark) {
       document.documentElement.classList.add('dark');
       document.body.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
     } else {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
     }
-    localStorage.setItem('msl_theme', dark ? 'dark' : 'light');
+  }
+
+  function getSystemPrefersDark(): boolean {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  }
+
+  function setThemeMode(mode: ThemeMode) {
+    themeMode.value = mode;
+    localStorage.setItem('msl_theme', mode);
+    if (mode === 'auto') {
+      applyTheme(getSystemPrefersDark());
+    } else if (mode === 'dark') {
+      applyTheme(true);
+    } else {
+      applyTheme(false);
+    }
+  }
+
+  function cycleThemeMode() {
+    if (themeMode.value === 'auto') {
+      setThemeMode('light');
+    } else if (themeMode.value === 'light') {
+      setThemeMode('dark');
+    } else {
+      setThemeMode('auto');
+    }
+  }
+
+  function setTheme(dark: boolean) {
+    setThemeMode(dark ? 'dark' : 'light');
   }
 
   function toggleTheme() {
-    setTheme(!isDarkMode.value);
+    cycleThemeMode();
+  }
+
+  function initTheme() {
+    const saved = localStorage.getItem('msl_theme') as ThemeMode | null;
+    const mode: ThemeMode = (saved === 'dark' || saved === 'light' || saved === 'auto') ? saved : 'auto';
+    setThemeMode(mode);
+
+    // Listen to Browser / OS Theme changes in real time
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = (e: MediaQueryListEvent) => {
+        if (themeMode.value === 'auto') {
+          applyTheme(e.matches);
+        }
+      };
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', listener);
+      } else if ((mediaQuery as any).addListener) {
+        (mediaQuery as any).addListener(listener);
+      }
+    }
+
+    // Listen to parent fnOS desktop / iframe theme change events
+    if (typeof window !== 'undefined') {
+      window.addEventListener('message', (event) => {
+        if (!event.data) return;
+        const msg = event.data;
+        if (msg.type === 'theme-change' || msg.event === 'theme' || msg.action === 'theme') {
+          const targetTheme = msg.theme || msg.data;
+          if (themeMode.value === 'auto') {
+            if (targetTheme === 'dark') applyTheme(true);
+            else if (targetTheme === 'light') applyTheme(false);
+            else applyTheme(getSystemPrefersDark());
+          }
+        }
+      });
+    }
   }
 
   async function verifyAndFetchUserInfo(): Promise<boolean> {
@@ -106,14 +180,8 @@ export const useAppStore = defineStore('app', () => {
   }
 
   async function initAuth() {
-    // 1. Theme initialization
-    const savedTheme = localStorage.getItem('msl_theme');
-    if (savedTheme) {
-      setTheme(savedTheme === 'dark');
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark);
-    }
+    // 1. Theme initialization (Defaults to auto following system/browser)
+    initTheme();
 
     // 2. Always verify token with backend on startup
     const valid = await verifyAndFetchUserInfo();
@@ -194,6 +262,7 @@ export const useAppStore = defineStore('app', () => {
 
   return {
     currentTab,
+    themeMode,
     isDarkMode,
     isLoggedIn,
     showLoginDialog,
@@ -201,6 +270,8 @@ export const useAppStore = defineStore('app', () => {
     userInfo,
     isVip,
     isRealNamed,
+    setThemeMode,
+    cycleThemeMode,
     setTheme,
     toggleTheme,
     initAuth,

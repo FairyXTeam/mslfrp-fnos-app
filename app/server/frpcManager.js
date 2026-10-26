@@ -155,6 +155,13 @@ class FrpcManager {
       return { status: 'running', pid: existing[numericId].pid, alreadyRunning: true };
     }
 
+    // Clean up in-memory reference of any old instance before starting anew
+    if (this.processes.has(numericId)) {
+      const old = this.processes.get(numericId);
+      this.processes.delete(numericId);
+      try { if (old.proc && !old.proc.killed) old.proc.kill('SIGKILL'); } catch {}
+    }
+
     const frpcBin = await this.ensureFrpc(appDest);
 
     // 1. Fetch live dynamic configuration in TOML format from MSL Cloud API
@@ -168,7 +175,7 @@ class FrpcManager {
     });
 
     if (!configRes || configRes.code !== 200 || !configRes.data) {
-      throw new Error(configRes?.msg || 'Failed to pull dynamic configuration from MSL');
+      throw new Error(configRes?.msg || '从 MSL 云端获取动态穿透配置失败');
     }
 
     const tomlContent = configRes.data;
@@ -204,13 +211,16 @@ class FrpcManager {
     const pidFile = path.join(runDir, `tunnel_${numericId}.pid`);
     fs.writeFileSync(pidFile, String(proc.pid), 'utf8');
 
-    this.processes.set(numericId, {
+    const procRecord = {
       pid: proc.pid,
       proc,
       startTime: Date.now(),
       configFile,
-      logFile
-    });
+      logFile,
+      hasError: false,
+      lastError: null
+    };
+    this.processes.set(numericId, procRecord);
 
     proc.on('exit', (code, signal) => {
       console.log(`[frpcManager] Tunnel ${numericId} exited with code ${code}, signal ${signal}`);
@@ -219,9 +229,115 @@ class FrpcManager {
       try { if (fs.existsSync(configFile)) fs.unlinkSync(configFile); } catch {}
     });
 
-    proc.unref();
+    // 5. Await startup confirmation or failure (handshake window)
+    return new Promise((resolve, reject) => {
+      let isSettled = false;
+      let startupBuffer = '';
 
-    return { status: 'running', pid: proc.pid };
+      const cleanupListeners = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        proc.stdout.removeListener('data', onData);
+        proc.stderr.removeListener('data', onData);
+      };
+
+      const fail = (errMsg) => {
+        if (isSettled) return;
+        isSettled = true;
+        cleanupListeners();
+
+        procRecord.hasError = true;
+        procRecord.lastError = errMsg;
+
+        // Force kill failed frpc so it doesn't linger as a zombie process
+        try {
+          proc.kill('SIGTERM');
+          setTimeout(() => {
+            try { proc.kill('SIGKILL'); } catch {}
+          }, 300);
+        } catch {}
+
+        this.processes.delete(numericId);
+        try { if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile); } catch {}
+        try { if (fs.existsSync(configFile)) fs.unlinkSync(configFile); } catch {}
+
+        try {
+          fs.appendFileSync(logFile, `[System] 启动失败: ${errMsg}\n`);
+        } catch {}
+
+        reject(new Error(errMsg));
+      };
+
+      const succeed = () => {
+        if (isSettled) return;
+        isSettled = true;
+        cleanupListeners();
+        proc.unref();
+
+        // Keep runtime error watcher on process: if proxy fails at any point, terminate zombie
+        const onRuntimeError = (chunk) => {
+          const text = chunk.toString();
+          if (text.includes('start error:') || text.includes('already exists')) {
+            console.error(`[frpcManager] Proxy error detected in tunnel ${numericId}: ${text.trim()}`);
+            procRecord.hasError = true;
+            try { proc.kill('SIGKILL'); } catch {}
+          }
+        };
+        proc.stdout.on('data', onRuntimeError);
+        proc.stderr.on('data', onRuntimeError);
+
+        resolve({ status: 'running', pid: proc.pid });
+      };
+
+      const onData = (chunk) => {
+        const text = chunk.toString();
+        startupBuffer += text;
+
+        // Check for specific known frpc failure patterns
+        if (startupBuffer.includes('already exists')) {
+          return fail('代理名称已被占用 (proxy already exists)，该隧道可能已在其他设备或云端在线运行');
+        }
+        if (startupBuffer.includes('port already used')) {
+          return fail('远端映射端口已被占用 (port already used)，请更换端口或稍后重试');
+        }
+        if (startupBuffer.includes('start error:')) {
+          const match = startupBuffer.match(/start error:\s*([^\n\r]+)/);
+          const detail = match ? match[1].trim() : '代理启动错误';
+          return fail(`代理启动失败: ${detail}`);
+        }
+        if (startupBuffer.includes('login to server failed:')) {
+          const match = startupBuffer.match(/login to server failed:\s*([^\n\r]+)/);
+          const detail = match ? match[1].trim() : '无法连接至穿透服务器';
+          return fail(`节点登录失败: ${detail}`);
+        }
+        if (startupBuffer.includes('connect to server error:')) {
+          return fail('无法连接至穿透节点服务器，请检查节点状态或网络');
+        }
+        if (startupBuffer.includes('authorization failed')) {
+          return fail('穿透节点授权失败 (Token 或密钥无效)');
+        }
+
+        // Check for success pattern
+        if (startupBuffer.includes('start proxy success') || startupBuffer.includes('隧道已成功启动')) {
+          return succeed();
+        }
+      };
+
+      proc.stdout.on('data', onData);
+      proc.stderr.on('data', onData);
+
+      proc.once('exit', (code) => {
+        if (!isSettled) {
+          fail(`frpc 进程提前退出 (退出码: ${code})`);
+        }
+      });
+
+      // Handshake timeout (7.5s) for high-latency / remote node connections
+      const timeoutId = setTimeout(() => {
+        if (!isSettled) {
+          fail('连接穿透节点超时 (7.5 秒未收到节点响应)，请检查节点状态或重试');
+        }
+      }, 7500);
+    });
   }
 
   stopTunnel(pkgVar, tunnelId) {
@@ -256,26 +372,21 @@ class FrpcManager {
       } catch (e) {
         // Process might have already terminated
       }
-    }
 
-    // Also send SIGTERM matching the tunnel config filename to avoid any orphan instances
-    try {
-      execFile('pkill', ['-TERM', '-f', `tunnel_${numericId}.toml`], () => {});
-    } catch {}
-
-    // Escalate to SIGKILL after 1.2s if stubborn process remains alive
-    setTimeout(() => {
-      if (pid) {
+      // Escalate to SIGKILL for that specific PID only if still alive after 1.2s
+      const targetPid = pid;
+      setTimeout(() => {
         try {
-          process.kill(pid, 0); // Check if alive
-          process.kill(pid, 'SIGKILL');
-          console.log(`[frpcManager] Force-killed stubborn tunnel ${numericId} (PID: ${pid})`);
+          process.kill(targetPid, 0);
+          process.kill(targetPid, 'SIGKILL');
+          console.log(`[frpcManager] Force-killed stubborn tunnel ${numericId} (PID: ${targetPid})`);
         } catch {}
-      }
+      }, 1200);
+    } else {
       try {
-        execFile('pkill', ['-KILL', '-f', `tunnel_${numericId}.toml`], () => {});
+        execFile('pkill', ['-TERM', '-f', `tunnel_${numericId}.toml`], () => {});
       } catch {}
-    }, 1200);
+    }
 
     // Cleanup PID file and temp config
     try {
@@ -348,11 +459,15 @@ class FrpcManager {
         const info = this.processes.get(numericId);
         pid = info.pid;
         startTime = info.startTime;
-        try {
-          process.kill(pid, 0);
-          isRunning = true;
-        } catch {
-          this.processes.delete(numericId);
+        if (info.hasError) {
+          isRunning = false;
+        } else {
+          try {
+            process.kill(pid, 0);
+            isRunning = true;
+          } catch {
+            this.processes.delete(numericId);
+          }
         }
       } else if (fs.existsSync(runDir)) {
         const pidFile = path.join(runDir, `tunnel_${numericId}.pid`);

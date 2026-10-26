@@ -19,7 +19,8 @@ import {
   Cog6ToothIcon,
   UserIcon,
   SunIcon,
-  MoonIcon
+  MoonIcon,
+  ComputerDesktopIcon
 } from '@heroicons/vue/24/outline';
 
 const appStore = useAppStore();
@@ -54,11 +55,13 @@ onMounted(() => {
           <span class="font-bold text-sm text-zinc-900 dark:text-white">MSLFrp 内网映射</span>
         </div>
         <button
-          @click="appStore.toggleTheme"
-          class="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
+          @click="appStore.cycleThemeMode"
+          class="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center cursor-pointer transition-colors"
+          :title="`当前模式: ${appStore.themeMode === 'auto' ? '自动 (跟随系统)' : appStore.themeMode === 'dark' ? '深色' : '浅色'} (点击切换)`"
         >
-          <MoonIcon v-if="appStore.isDarkMode" class="w-4 h-4" />
-          <SunIcon v-else class="w-4 h-4" />
+          <ComputerDesktopIcon v-if="appStore.themeMode === 'auto'" class="w-4 h-4 text-blue-500" />
+          <MoonIcon v-else-if="appStore.themeMode === 'dark'" class="w-4 h-4 text-blue-400" />
+          <SunIcon v-else class="w-4 h-4 text-amber-500" />
         </button>
       </header>
 

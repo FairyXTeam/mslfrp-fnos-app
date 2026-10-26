@@ -10,6 +10,7 @@ import {
   UserIcon,
   SunIcon,
   MoonIcon,
+  ComputerDesktopIcon,
   ArrowRightOnRectangleIcon,
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/outline';
@@ -144,16 +145,17 @@ function handleNav(id: string) {
         登录 MSL 账号
       </button>
 
-      <!-- Utility bar (Dark mode toggle) -->
+      <!-- Utility bar (Dark mode toggle with 3 states cycle) -->
       <div class="flex items-center justify-between px-1">
         <button
-          @click="appStore.toggleTheme"
-          class="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 bg-transparent border-0 cursor-pointer p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          :title="appStore.isDarkMode ? '切换到亮色模式' : '切换到暗色模式'"
+          @click="appStore.cycleThemeMode"
+          class="inline-flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 bg-transparent border-0 cursor-pointer p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          :title="`当前: ${appStore.themeMode === 'auto' ? '自动 (跟随系统)' : appStore.themeMode === 'dark' ? '深色模式' : '浅色模式'} (点击切换)`"
         >
-          <MoonIcon v-if="appStore.isDarkMode" class="w-4 h-4 text-amber-400" />
+          <ComputerDesktopIcon v-if="appStore.themeMode === 'auto'" class="w-4 h-4 text-blue-500" />
+          <MoonIcon v-else-if="appStore.themeMode === 'dark'" class="w-4 h-4 text-blue-400" />
           <SunIcon v-else class="w-4 h-4 text-amber-500" />
-          <span>{{ appStore.isDarkMode ? '暗黑模式' : '亮白模式' }}</span>
+          <span>{{ appStore.themeMode === 'auto' ? '跟随系统' : appStore.themeMode === 'dark' ? '暗黑模式' : '亮白模式' }}</span>
         </button>
       </div>
     </div>
