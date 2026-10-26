@@ -62,9 +62,11 @@ onMounted(() => {
         </button>
       </header>
 
-      <!-- View Component Container -->
+      <!-- View Component Container with KeepAlive -->
       <div class="flex-1 overflow-hidden">
-        <component :is="currentViewComponent" />
+        <KeepAlive>
+          <component :is="currentViewComponent" :key="appStore.currentTab" />
+        </KeepAlive>
       </div>
 
       <!-- Mobile Bottom Navigation Bar -->

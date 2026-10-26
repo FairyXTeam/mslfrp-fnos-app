@@ -189,26 +189,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
-    <!-- Header Block (if not hidden) -->
-    <div v-if="!hideHeader" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+  <div class="flex flex-col gap-3.5">
+    <!-- Top Control Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <!-- Title Block (if not hidden) -->
+      <div v-if="!hideHeader" class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
           <ArrowTrendingUpIcon class="w-5 h-5 stroke-[1.8]" />
         </div>
         <div>
           <h3 class="text-sm font-bold text-zinc-900 dark:text-white m-0">{{ title }}</h3>
-          <p class="text-xs text-zinc-400 m-0 mt-0.5">{{ subtitle }}</p>
+          <p class="text-[11px] text-zinc-400 m-0 mt-0.5">{{ subtitle }}</p>
         </div>
       </div>
 
-      <!-- Days Switcher -->
-      <div class="inline-flex p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 self-start sm:self-auto shrink-0">
+      <!-- Days Switcher (Always available) -->
+      <div class="inline-flex p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 self-start sm:self-auto shrink-0 border border-zinc-200/50 dark:border-zinc-700/50">
         <button
           @click="trafficDays = 1; fetchTrafficData()"
           :class="[
-            'px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer border-0 transition-all',
-            trafficDays === 1 ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-2xs' : 'text-zinc-600 dark:text-zinc-400 bg-transparent'
+            'px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer border-0 transition-all select-none',
+            trafficDays === 1 ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-2xs font-bold' : 'text-zinc-600 dark:text-zinc-400 bg-transparent hover:text-zinc-900 dark:hover:text-zinc-200'
           ]"
         >
           今日 (24h)
@@ -216,8 +217,8 @@ onMounted(() => {
         <button
           @click="trafficDays = 7; fetchTrafficData()"
           :class="[
-            'px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer border-0 transition-all',
-            trafficDays === 7 ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-2xs' : 'text-zinc-600 dark:text-zinc-400 bg-transparent'
+            'px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer border-0 transition-all select-none',
+            trafficDays === 7 ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-2xs font-bold' : 'text-zinc-600 dark:text-zinc-400 bg-transparent hover:text-zinc-900 dark:hover:text-zinc-200'
           ]"
         >
           近 7 天
@@ -225,8 +226,8 @@ onMounted(() => {
         <button
           @click="trafficDays = 30; fetchTrafficData()"
           :class="[
-            'px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer border-0 transition-all',
-            trafficDays === 30 ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-2xs' : 'text-zinc-600 dark:text-zinc-400 bg-transparent'
+            'px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer border-0 transition-all select-none',
+            trafficDays === 30 ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-2xs font-bold' : 'text-zinc-600 dark:text-zinc-400 bg-transparent hover:text-zinc-900 dark:hover:text-zinc-200'
           ]"
         >
           近 30 天
@@ -234,42 +235,57 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Summary Metrics Cards -->
-    <div :class="['grid gap-2.5', compact ? 'grid-cols-3' : 'grid-cols-1 sm:grid-cols-3']">
-      <div class="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300 flex items-center justify-center shrink-0">
-            <ArrowDownIcon class="w-3.5 h-3.5 stroke-[2]" />
+    <!-- Summary Metrics Cards (Clean Vertical Stack, Never Wrap Characters) -->
+    <div class="grid grid-cols-3 gap-2 sm:gap-3">
+      <!-- 1. Inbound Card -->
+      <div class="p-2.5 sm:p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 flex flex-col justify-between gap-1 select-none">
+        <div class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 min-w-0">
+          <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300 flex items-center justify-center shrink-0">
+            <ArrowDownIcon class="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[2.5]" />
           </div>
-          <span class="text-xs font-medium text-zinc-600 dark:text-zinc-300">入站流量</span>
+          <span class="text-[11px] sm:text-xs font-medium truncate">入站</span>
         </div>
-        <span class="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">{{ formatTraffic(totalInboundMB) }}</span>
+        <span class="text-xs sm:text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400 truncate">
+          {{ formatTraffic(totalInboundMB) }}
+        </span>
       </div>
 
-      <div class="p-3 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0">
-            <ArrowUpIcon class="w-3.5 h-3.5 stroke-[2]" />
+      <!-- 2. Outbound Card -->
+      <div class="p-2.5 sm:p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 flex flex-col justify-between gap-1 select-none">
+        <div class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 min-w-0">
+          <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0">
+            <ArrowUpIcon class="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[2.5]" />
           </div>
-          <span class="text-xs font-medium text-zinc-600 dark:text-zinc-300">出站流量</span>
+          <span class="text-[11px] sm:text-xs font-medium truncate">出站</span>
         </div>
-        <span class="text-xs sm:text-sm font-bold text-blue-600 dark:text-blue-400 font-mono">{{ formatTraffic(totalOutboundMB) }}</span>
+        <span class="text-xs sm:text-sm font-bold font-mono text-blue-600 dark:text-blue-400 truncate">
+          {{ formatTraffic(totalOutboundMB) }}
+        </span>
       </div>
 
-      <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 flex items-center justify-between">
-        <span class="text-xs font-medium text-zinc-600 dark:text-zinc-300">传输总量</span>
-        <span class="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white font-mono">{{ formatTraffic(totalInboundMB + totalOutboundMB) }}</span>
+      <!-- 3. Total Card -->
+      <div class="p-2.5 sm:p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 flex flex-col justify-between gap-1 select-none">
+        <div class="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 min-w-0">
+          <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-zinc-200/80 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center shrink-0">
+            <ArrowTrendingUpIcon class="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[2.5]" />
+          </div>
+          <span class="text-[11px] sm:text-xs font-medium truncate">总量</span>
+        </div>
+        <span class="text-xs sm:text-sm font-bold font-mono text-zinc-900 dark:text-white truncate">
+          {{ formatTraffic(totalInboundMB + totalOutboundMB) }}
+        </span>
       </div>
     </div>
 
     <!-- SVG Area Chart Container -->
     <div class="relative w-full border border-zinc-100 dark:border-zinc-800/80 rounded-xl bg-zinc-50/40 dark:bg-zinc-950/40 p-2 sm:p-4 select-none">
-      <div v-if="loading" class="py-20 text-center text-xs text-zinc-400">
+      <div v-if="loading" class="py-12 sm:py-16 text-center text-xs text-zinc-400">
         正在拉取流量数据...
       </div>
 
-      <div v-else-if="trafficPoints.length === 0" class="py-20 text-center text-xs text-zinc-400">
-        该时段内暂无流量记录。
+      <div v-else-if="trafficPoints.length === 0" class="py-10 sm:py-14 flex flex-col items-center justify-center gap-2 text-zinc-400 select-none">
+        <ArrowTrendingUpIcon class="w-8 h-8 text-zinc-300 dark:text-zinc-600 stroke-[1.5]" />
+        <span class="text-xs text-zinc-400 dark:text-zinc-500">所选时段内暂无网络流量记录</span>
       </div>
 
       <div v-else class="w-full flex flex-col gap-2">

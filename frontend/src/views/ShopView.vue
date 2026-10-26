@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, onDeactivated, computed } from 'vue';
 import QRCode from 'qrcode';
 import { toast } from '../utils/toast';
 import { get, post } from '../api/client';
@@ -60,6 +60,10 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  stopPolling();
+});
+
+onDeactivated(() => {
   stopPolling();
 });
 
@@ -251,9 +255,9 @@ function startPollingOrder(orderNo: string) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-y-auto p-4 sm:p-6 md:p-8">
+  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8">
     <!-- Header -->
-    <div class="flex items-start sm:items-center justify-between gap-3 mb-5 sm:mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-6">
       <div class="flex-1 min-w-0">
         <h1 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white tracking-tight m-0">增值服务</h1>
         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 m-0 leading-relaxed">
@@ -262,7 +266,7 @@ function startPollingOrder(orderNo: string) {
       </div>
 
       <!-- Live Balance Card with Quick Action -->
-      <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-amber-900 dark:text-amber-300 text-xs shrink-0 whitespace-nowrap mt-0.5 sm:mt-0">
+      <div class="flex items-center self-start sm:self-auto gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-amber-900 dark:text-amber-300 text-xs shrink-0 whitespace-nowrap mt-0.5 sm:mt-0">
         <span>当前余额:</span>
         <span class="font-bold text-sm">{{ appStore.userInfo.score }}</span>
         <span class="text-xs opacity-75">积分</span>
@@ -277,7 +281,7 @@ function startPollingOrder(orderNo: string) {
     </div>
 
     <!-- fnOS Native Pill Segmented Control -->
-    <div class="flex items-center p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl mb-6 max-w-xs shrink-0">
+    <div class="flex items-center p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl mb-6 w-full sm:max-w-xs shrink-0">
       <button
         type="button"
         @click="subTab = 'services'"

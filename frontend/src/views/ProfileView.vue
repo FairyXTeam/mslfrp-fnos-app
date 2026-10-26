@@ -182,9 +182,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-y-auto p-4 sm:p-6 md:p-8">
+  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8">
     <!-- Header -->
-    <div class="flex items-start sm:items-center justify-between gap-3 mb-6">
+    <div class="flex items-start sm:items-center justify-between gap-3 mb-5 sm:mb-6">
       <div class="flex-1 min-w-0">
         <h1 class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white tracking-tight m-0">个人中心</h1>
         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 m-0 leading-relaxed">
@@ -197,16 +197,16 @@ onMounted(async () => {
           href="https://user.mslmc.net/user/dashboard"
           target="_blank"
           rel="noopener noreferrer"
-          class="px-3.5 py-2 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/60 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 shadow-2xs no-underline"
+          class="px-2.5 sm:px-3.5 py-2 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/60 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 shadow-2xs no-underline"
           title="在新窗口打开 MSL 用户中心官网"
         >
           <ArrowTopRightOnSquareIcon class="w-4 h-4" />
-          <span>MSL 用户中心</span>
+          <span class="hidden sm:inline">MSL 用户中心</span>
         </a>
 
         <button
           @click="appStore.refreshFrpInfo(); fetchWhitelist(); tunnelsStore.fetchTunnels()"
-          class="px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 shadow-2xs"
+          class="px-2.5 sm:px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5 shadow-2xs"
         >
           <ArrowPathIcon class="w-4 h-4" />
           <span>刷新</span>
@@ -214,30 +214,30 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div class="flex flex-col gap-6 pb-12">
+    <div class="flex flex-col gap-5 sm:gap-6 pb-12">
       <!-- 1. MSLFrp 用户信息 (6-Grid Metrics fnOS Native Card) -->
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-6 shadow-sm flex flex-col gap-5">
-        <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 pb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-              <UserCircleIcon class="w-6 h-6 stroke-[1.8]" />
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-4 sm:p-6 shadow-sm flex flex-col gap-4 sm:gap-5">
+        <div class="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 pb-3 sm:pb-4">
+          <div class="flex items-center gap-2.5 sm:gap-3">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <UserCircleIcon class="w-5 h-5 sm:w-6 sm:h-6 stroke-[1.8]" />
             </div>
             <div>
               <h3 class="text-sm font-bold text-zinc-900 dark:text-white m-0">MSLFrp 用户信息</h3>
-              <p class="text-xs text-zinc-400 m-0 mt-0.5">当前登录账户的映射服务资源与配额详情</p>
+              <p class="text-[11px] text-zinc-400 m-0 mt-0.5">当前登录账户的映射服务资源与配额详情</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
             <span
               v-if="appStore.isRealNamed"
-              class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-1"
+              class="text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-1"
             >
               <ShieldCheckIcon class="w-3.5 h-3.5" />
               已实名
             </span>
             <span
               v-else
-              class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+              class="text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
             >
               免实名
             </span>
@@ -245,26 +245,26 @@ onMounted(async () => {
         </div>
 
         <!-- 6 Metrics Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           <!-- 用户名 -->
-          <div class="p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
+          <div class="p-3 sm:p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
             <span class="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">用户名</span>
-            <span class="text-sm font-bold text-zinc-900 dark:text-white truncate" :title="appStore.userInfo.username">
+            <span class="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white truncate" :title="appStore.userInfo.username">
               {{ appStore.userInfo.username }}
             </span>
           </div>
 
           <!-- 隧道数 -->
-          <div class="p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
+          <div class="p-3 sm:p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
             <span class="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">隧道数</span>
             <div class="flex items-baseline gap-1">
-              <span class="text-base font-bold text-blue-600 dark:text-blue-400">{{ tunnelsStore.tunnels.length }}</span>
+              <span class="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">{{ tunnelsStore.tunnels.length }}</span>
               <span class="text-xs text-zinc-400">/ {{ appStore.userInfo.maxTunnels }}</span>
             </div>
           </div>
 
           <!-- 用户组 -->
-          <div class="p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
+          <div class="p-3 sm:p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
             <span class="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">用户组</span>
             <span class="text-xs font-bold text-amber-600 dark:text-amber-400 truncate">
               {{ appStore.userInfo.userGroupName || '普通用户' }}
@@ -272,23 +272,23 @@ onMounted(async () => {
           </div>
 
           <!-- 限速 -->
-          <div class="p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
+          <div class="p-3 sm:p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
             <span class="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">限速</span>
-            <span class="text-sm font-bold text-zinc-900 dark:text-white">
+            <span class="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white">
               {{ appStore.userInfo.boundLimit || 100 }} Mbps
             </span>
           </div>
 
           <!-- 已用流量 -->
-          <div class="p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
+          <div class="p-3 sm:p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
             <span class="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">已用流量</span>
-            <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400 truncate">
+            <span class="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 truncate">
               {{ formatTraffic(totalUsedTrafficMB) }}
             </span>
           </div>
 
           <!-- 过期时间 -->
-          <div class="p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
+          <div class="p-3 sm:p-3.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/80 flex flex-col gap-1">
             <span class="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">过期时间</span>
             <span class="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 truncate" :title="formatTimestamp(appStore.userInfo.vipOutdated)">
               {{ formatTimestamp(appStore.userInfo.vipOutdated) }}
@@ -298,27 +298,27 @@ onMounted(async () => {
       </div>
 
       <!-- 2. 我的 Token Card -->
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-6 shadow-sm flex flex-col gap-4">
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-4 sm:p-6 shadow-sm flex flex-col gap-4">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+          <div class="flex items-center gap-2.5 sm:gap-3">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
               <KeyIcon class="w-5 h-5 stroke-[1.8]" />
             </div>
             <div>
               <h3 class="text-sm font-bold text-zinc-900 dark:text-white m-0">我的 Token</h3>
-              <p class="text-xs text-zinc-400 m-0 mt-0.5">Frp 系统通信密钥，用于客户端与映射中心服务端安全建立连接</p>
+              <p class="text-[11px] text-zinc-400 m-0 mt-0.5">Frp 系统通信密钥，用于客户端与映射中心服务端安全建立连接</p>
             </div>
           </div>
         </div>
 
-        <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div class="p-3 sm:p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0 flex-1">
             <span class="font-mono text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate select-all">
               {{ maskedToken }}
             </span>
           </div>
 
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap shrink-0">
             <button
               @click="showToken = !showToken"
               class="p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
@@ -329,15 +329,15 @@ onMounted(async () => {
             </button>
             <button
               @click="copyToken"
-              class="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              class="px-2.5 sm:px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
             >
               <ClipboardDocumentIcon class="w-4 h-4 text-zinc-400" />
-              <span>复制 Token</span>
+              <span>复制</span>
             </button>
             <button
               @click="handleResetToken"
               :disabled="resettingToken"
-              class="px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              class="px-2.5 sm:px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
             >
               <ArrowPathIcon class="w-4 h-4" :class="{ 'animate-spin': resettingToken }" />
               <span>{{ resettingToken ? '重置中...' : '重置 Token' }}</span>
@@ -347,7 +347,7 @@ onMounted(async () => {
       </div>
 
       <!-- 3. 域名白名单 Card -->
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-6 shadow-sm flex flex-col gap-4">
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 p-4 sm:p-6 shadow-sm flex flex-col gap-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">

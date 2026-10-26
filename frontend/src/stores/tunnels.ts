@@ -57,6 +57,7 @@ export const useTunnelsStore = defineStore('tunnels', () => {
   const statusMap = ref<Record<number, TunnelLiveStatus>>({});
   const activeLogTunnelId = ref<number | null>(null);
   const autostartIds = ref<number[]>([]);
+  const currentFilter = ref<'all' | 'running' | 'stopped' | 'remote'>('all');
 
   async function fetchAutostart() {
     try {
@@ -111,8 +112,10 @@ export const useTunnelsStore = defineStore('tunnels', () => {
     }
   }
 
-  async function fetchTunnels() {
-    loading.value = true;
+  async function fetchTunnels(silent = false) {
+    if (!silent && tunnels.value.length === 0) {
+      loading.value = true;
+    }
     try {
       if (nodes.value.length === 0) {
         await fetchNodes();
@@ -229,6 +232,7 @@ export const useTunnelsStore = defineStore('tunnels', () => {
     statusMap,
     activeLogTunnelId,
     autostartIds,
+    currentFilter,
     fetchNodes,
     fetchTunnels,
     fetchLiveStatuses,

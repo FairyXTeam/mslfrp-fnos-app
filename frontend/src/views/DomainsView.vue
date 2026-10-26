@@ -183,7 +183,7 @@ function formatSrvDisplay(name: string, domain: string) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-y-auto p-4 sm:p-6 md:p-8">
+  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8">
     <!-- Header -->
     <div class="flex items-start sm:items-center justify-between gap-3 mb-5 sm:mb-6">
       <div class="flex-1 min-w-0">

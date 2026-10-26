@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, onActivated, onDeactivated } from 'vue';
 import { useTunnelsStore, FrpTunnel } from '../stores/tunnels';
 import { useAppStore } from '../stores/app';
 import TunnelCard from '../components/TunnelCard.vue';
@@ -22,8 +22,11 @@ const activeLogTunnelId = ref<number | null>(null);
 const activeTrafficTunnel = ref<FrpTunnel | null>(null);
 const editingTunnel = ref<FrpTunnel | null>(null);
 
-// Tab Filter: all / running / stopped / remote
-const currentFilter = ref<'all' | 'running' | 'stopped' | 'remote'>('all');
+// Tab Filter: all / running / stopped / remote (persisted in store)
+const currentFilter = computed({
+  get: () => tunnelsStore.currentFilter,
+  set: (val) => { tunnelsStore.currentFilter = val; }
+});
 
 const runningCount = computed(() => {
   return tunnelsStore.tunnels.filter(t => !!tunnelsStore.statusMap[t.id]?.running).length;
@@ -53,22 +56,37 @@ const filteredTunnels = computed(() => {
 
 let statusTimer: any = null;
 let pollTick = 0;
+let isLoadingData = false;
 
-async function loadTunnelsData() {
-  if (appStore.isLoggedIn) {
-    await tunnelsStore.fetchTunnels();
+function startPolling() {
+  if (statusTimer) return;
+  statusTimer = setInterval(async () => {
+    pollTick++;
+    await tunnelsStore.fetchLiveStatuses();
+    // Periodically refresh cloud tunnel status every 9s silently
+    if (pollTick % 3 === 0) {
+      await tunnelsStore.fetchTunnels(true);
+    }
+  }, 3000);
+}
+
+function stopPolling() {
+  if (statusTimer) {
+    clearInterval(statusTimer);
+    statusTimer = null;
+  }
+}
+
+async function loadTunnelsData(silent = false) {
+  if (!appStore.isLoggedIn || isLoadingData) return;
+  isLoadingData = true;
+  try {
+    await tunnelsStore.fetchTunnels(silent);
     await tunnelsStore.fetchNodes();
     appStore.userInfo.usedTunnels = tunnelsStore.tunnels.length;
-    if (!statusTimer) {
-      statusTimer = setInterval(async () => {
-        pollTick++;
-        await tunnelsStore.fetchLiveStatuses();
-        // Periodically refresh cloud tunnel status every 9s
-        if (pollTick % 3 === 0) {
-          await tunnelsStore.fetchTunnels();
-        }
-      }, 3000);
-    }
+    startPolling();
+  } finally {
+    isLoadingData = false;
   }
 }
 
@@ -78,21 +96,31 @@ watch(
     if (loggedIn) {
       loadTunnelsData();
     } else {
-      if (statusTimer) {
-        clearInterval(statusTimer);
-        statusTimer = null;
-      }
+      stopPolling();
     }
-  },
-  { immediate: true }
+  }
 );
 
 onMounted(async () => {
-  await loadTunnelsData();
+  if (appStore.isLoggedIn) {
+    await loadTunnelsData();
+  }
+});
+
+onActivated(async () => {
+  if (appStore.isLoggedIn) {
+    startPolling();
+    // Silently and quickly refresh live statuses without wiping cards or showing loading
+    await tunnelsStore.fetchLiveStatuses();
+  }
+});
+
+onDeactivated(() => {
+  stopPolling();
 });
 
 onUnmounted(() => {
-  if (statusTimer) clearInterval(statusTimer);
+  stopPolling();
 });
 
 function handleCreate() {
@@ -122,7 +150,7 @@ async function handleRefresh() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-y-auto p-4 sm:p-6 md:p-8">
+  <div class="flex flex-col h-full overflow-y-auto p-3.5 sm:p-6 md:p-8">
     <!-- Header (Matching Feiniu Native Style with Subtitle) -->
     <div class="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
       <div class="flex-1 min-w-0">
@@ -158,11 +186,11 @@ async function handleRefresh() {
     </div>
 
     <!-- Tabs Segmented Filter (全部 / 已启动 / 未启动 / 远端启动) -->
-    <div v-if="tunnelsStore.tunnels.length > 0" class="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 w-fit mb-5 text-xs border border-zinc-200/60 dark:border-zinc-700/50 no-scrollbar">
+    <div v-if="tunnelsStore.tunnels.length > 0" class="flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 w-full sm:w-fit mb-5 text-xs border border-zinc-200/60 dark:border-zinc-700/50 overflow-x-auto no-scrollbar">
       <button
         @click="currentFilter = 'all'"
         :class="[
-          'h-8 px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none',
+          'h-8 px-3 sm:px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none shrink-0',
           currentFilter === 'all'
             ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 shadow-xs'
             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 bg-transparent'
@@ -177,7 +205,7 @@ async function handleRefresh() {
       <button
         @click="currentFilter = 'running'"
         :class="[
-          'h-8 px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none',
+          'h-8 px-3 sm:px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none shrink-0',
           currentFilter === 'running'
             ? 'bg-white dark:bg-zinc-900 text-emerald-600 dark:text-emerald-400 shadow-xs'
             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 bg-transparent'
@@ -193,7 +221,7 @@ async function handleRefresh() {
       <button
         @click="currentFilter = 'stopped'"
         :class="[
-          'h-8 px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none',
+          'h-8 px-3 sm:px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none shrink-0',
           currentFilter === 'stopped'
             ? 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 shadow-xs'
             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 bg-transparent'
@@ -209,7 +237,7 @@ async function handleRefresh() {
       <button
         @click="currentFilter = 'remote'"
         :class="[
-          'h-8 px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none',
+          'h-8 px-3 sm:px-3.5 rounded-xl font-semibold cursor-pointer border-0 transition-all flex items-center gap-1.5 whitespace-nowrap leading-none select-none shrink-0',
           currentFilter === 'remote'
             ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 shadow-xs'
             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 bg-transparent'
