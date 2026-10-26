@@ -80,9 +80,7 @@ function handleNav(id: string) {
       <!-- User card -->
       <div
         v-if="appStore.isLoggedIn"
-        @click="handleNav('settings')"
-        class="p-2 rounded-lg bg-white/70 dark:bg-[#232429]/80 border border-zinc-200/70 dark:border-[#2e3038] shadow-2xs flex flex-col gap-1.5 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500/50 transition-all"
-        title="点击进入设置与个人中心"
+        class="p-2 rounded-lg bg-white/70 dark:bg-[#232429]/80 border border-zinc-200/70 dark:border-[#2e3038] shadow-2xs flex flex-col gap-1.5"
       >
         <div class="flex items-center justify-between gap-1.5">
           <div class="flex items-center gap-2 min-w-0">
@@ -216,9 +214,7 @@ function handleNav(id: string) {
       <!-- User card -->
       <div
         v-if="appStore.isLoggedIn"
-        @click="handleNav('settings')"
-        class="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-800 flex flex-col gap-2 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500/50 transition-all"
-        title="点击进入个人中心与设置"
+        class="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-800 flex flex-col gap-2"
       >
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2.5 min-w-0">
