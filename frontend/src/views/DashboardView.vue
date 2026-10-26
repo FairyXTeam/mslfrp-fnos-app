@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import axios from 'axios';
 import { toast } from '../utils/toast';
 import { confirmModal } from '../utils/confirm';
 import { get } from '../api/client';
@@ -7,6 +8,8 @@ import { useAppStore } from '../stores/app';
 import { useTunnelsStore } from '../stores/tunnels';
 import TrafficChart from '../components/common/TrafficChart.vue';
 import AdRewardModal from '../components/AdRewardModal.vue';
+import BaseModal from '../components/common/BaseModal.vue';
+import MarkdownPreview from '../components/common/MarkdownPreview.vue';
 import {
   RocketLaunchIcon,
   ComputerDesktopIcon,
@@ -20,7 +23,9 @@ import {
   UserGroupIcon,
   BoltIcon,
   ArrowTrendingUpIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  MegaphoneIcon,
+  ArrowsPointingOutIcon
 } from '@heroicons/vue/24/outline';
 
 const appStore = useAppStore();
@@ -178,12 +183,96 @@ async function handleResetToken() {
   }
 }
 
+// --- 5. Announcement (fnosNoticeMd) & Modal Notification ---
+const noticeContent = ref('');
+const noticeLoading = ref(false);
+const showNoticeModal = ref(false);
+const hasPendingNoticeModal = ref(false);
+const currentNoticeHash = ref('');
+
+function simpleNoticeHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'notice_' + Math.abs(hash).toString(36) + '_' + str.length;
+}
+
+async function fetchNotice(manual = false) {
+  noticeLoading.value = true;
+  try {
+    const res = await axios.get('https://api.mslmc.cn/v3/query/notice?query=fnosNoticeMd', {
+      timeout: 10000
+    });
+    if (res.data && res.data.code === 200 && res.data.data) {
+      const content = res.data.data.fnosNoticeMd || '';
+      noticeContent.value = content;
+      if (content.trim()) {
+        const hash = simpleNoticeHash(content.trim());
+        currentNoticeHash.value = hash;
+        const lastHash = localStorage.getItem('fnos_last_notice_hash');
+
+        if (manual) {
+          toast.success('公告已更新');
+        } else if (hash !== lastHash) {
+          // Announcement updated or never seen before
+          if (appStore.showLoginDialog) {
+            // Login dialog has higher priority; defer notice modal until login modal closes
+            hasPendingNoticeModal.value = true;
+          } else {
+            showNoticeModal.value = true;
+          }
+        }
+      }
+    } else if (manual) {
+      toast.info('暂无最新公告');
+    }
+  } catch (err: any) {
+    console.error('Fetch notice error:', err);
+    if (manual) {
+      toast.error('获取公告失败');
+    }
+  } finally {
+    noticeLoading.value = false;
+  }
+}
+
+// Watch login dialog: when closed, show pending notice modal
+watch(
+  () => appStore.showLoginDialog,
+  (isOpen) => {
+    if (!isOpen && hasPendingNoticeModal.value) {
+      setTimeout(() => {
+        if (!appStore.showLoginDialog && hasPendingNoticeModal.value) {
+          showNoticeModal.value = true;
+          hasPendingNoticeModal.value = false;
+        }
+      }, 300);
+    }
+  }
+);
+
+function dismissNoticeModal() {
+  showNoticeModal.value = false;
+  if (currentNoticeHash.value) {
+    localStorage.setItem('fnos_last_notice_hash', currentNoticeHash.value);
+  }
+}
+
+watch(showNoticeModal, (val) => {
+  if (!val && currentNoticeHash.value) {
+    localStorage.setItem('fnos_last_notice_hash', currentNoticeHash.value);
+  }
+});
+
 onMounted(async () => {
   await Promise.all([
     appStore.refreshFrpInfo(),
     tunnelsStore.fetchTunnels(),
     fetchWeather(),
-    fetchHitokoto()
+    fetchHitokoto(),
+    fetchNotice()
   ]);
 });
 </script>
@@ -379,6 +468,57 @@ onMounted(async () => {
         </div>
       </div>
 
+      <!-- 3.5. 仪表盘最新公告卡片 (6个数据卡片正下方) -->
+      <div class="p-5 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs flex flex-col gap-3 transition-colors">
+        <div class="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800/80">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <MegaphoneIcon class="w-4 h-4 stroke-[2]" />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-zinc-900 dark:text-white m-0 flex items-center gap-2">
+                <span>系统公告</span>
+                <span v-if="noticeContent" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/40">
+                  官方发布
+                </span>
+              </h3>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <button
+              v-if="noticeContent"
+              @click="showNoticeModal = true"
+              class="px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+              title="弹窗浏览"
+            >
+              <ArrowsPointingOutIcon class="w-3.5 h-3.5 text-zinc-400" />
+              <span class="hidden sm:inline">弹窗浏览</span>
+            </button>
+            <button
+              @click="fetchNotice(true)"
+              :disabled="noticeLoading"
+              class="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-colors cursor-pointer disabled:opacity-50"
+              title="刷新公告"
+            >
+              <ArrowPathIcon class="w-3.5 h-3.5" :class="{ 'animate-spin': noticeLoading }" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Card Body -->
+        <div v-if="noticeLoading && !noticeContent" class="py-6 flex items-center justify-center text-xs text-zinc-400 gap-2">
+          <ArrowPathIcon class="w-4 h-4 animate-spin text-blue-500" />
+          <span>正在加载最新公告...</span>
+        </div>
+        <div v-else-if="noticeContent" class="text-xs">
+          <MarkdownPreview :content="noticeContent" editor-id="fnos-notice-dashboard" />
+        </div>
+        <div v-else class="py-6 text-center text-xs text-zinc-400">
+          暂无最新公告
+        </div>
+      </div>
+
       <!-- 4. 流量趋势图卡片 -->
       <div class="p-5 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs flex flex-col overflow-hidden">
         <TrafficChart api-url="/api/frp/traffic/tunnel" title="MSLFrp 流量概览" :height="220" />
@@ -499,5 +639,38 @@ onMounted(async () => {
 
     <!-- Ad Reward (Earn Points) WeChat Modal -->
     <AdRewardModal v-model="showAdRewardModal" />
+
+    <!-- Notice Popup Modal (弹窗公告 - 登录弹窗优先级高于公告，内容不变只弹一次) -->
+    <BaseModal
+      v-model="showNoticeModal"
+      title="最新系统公告"
+      max-width="max-w-xl"
+    >
+      <div class="flex flex-col gap-3 py-1">
+        <div class="flex items-center gap-2 text-xs text-zinc-400 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+          <MegaphoneIcon class="w-4 h-4 text-blue-500 shrink-0" />
+          <span>MSLFrp 官方服务通知</span>
+        </div>
+        <div class="max-h-[60vh] overflow-y-auto pr-1">
+          <MarkdownPreview
+            v-if="noticeContent"
+            :content="noticeContent"
+            editor-id="fnos-notice-popup"
+          />
+          <div v-else class="py-8 text-center text-xs text-zinc-400">
+            暂无公告内容
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <button
+          @click="dismissNoticeModal"
+          class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer border-0"
+        >
+          我知道了
+        </button>
+      </template>
+    </BaseModal>
   </div>
 </template>
