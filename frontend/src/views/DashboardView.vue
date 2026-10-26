@@ -477,11 +477,8 @@ onMounted(async () => {
               <MegaphoneIcon class="w-4 h-4 stroke-[2]" />
             </div>
             <div>
-              <h3 class="text-sm font-bold text-zinc-900 dark:text-white m-0 flex items-center gap-2">
-                <span>系统公告</span>
-                <span v-if="noticeContent" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/40">
-                  官方发布
-                </span>
+              <h3 class="text-sm font-bold text-zinc-900 dark:text-white m-0">
+                系统公告
               </h3>
             </div>
           </div>
@@ -644,23 +641,17 @@ onMounted(async () => {
     <!-- Notice Popup Modal (弹窗公告 - 登录弹窗优先级高于公告，内容不变只弹一次) -->
     <BaseModal
       v-model="showNoticeModal"
-      title="最新系统公告"
+      title="系统公告"
       max-width="max-w-xl"
     >
-      <div class="flex flex-col gap-3 py-1">
-        <div class="flex items-center gap-2 text-xs text-zinc-400 pb-2 border-b border-zinc-100 dark:border-zinc-800">
-          <MegaphoneIcon class="w-4 h-4 text-blue-500 shrink-0" />
-          <span>MSLFrp 官方服务通知</span>
-        </div>
-        <div class="max-h-[60vh] overflow-y-auto pr-1">
-          <MarkdownPreview
-            v-if="noticeContent"
-            :content="noticeContent"
-            editor-id="fnos-notice-popup"
-          />
-          <div v-else class="py-8 text-center text-xs text-zinc-400">
-            暂无公告内容
-          </div>
+      <div class="max-h-[60vh] overflow-y-auto py-1 pr-1">
+        <MarkdownPreview
+          v-if="noticeContent"
+          :content="noticeContent"
+          editor-id="fnos-notice-popup"
+        />
+        <div v-else class="py-8 text-center text-xs text-zinc-400">
+          暂无公告内容
         </div>
       </div>
 
