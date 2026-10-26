@@ -200,7 +200,10 @@ export const useAppStore = defineStore('app', () => {
     // 1. Theme initialization (Defaults to auto following system/browser)
     initTheme();
 
-    // 2. Always verify token with backend on startup
+    // 2. Fetch app persistent configuration from backend (config.json)
+    await fetchAppConfig();
+
+    // 3. Always verify token with backend on startup
     const valid = await verifyAndFetchUserInfo();
     if (!valid) {
       isLoggedIn.value = false;
@@ -277,6 +280,35 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  const appConfig = ref<Record<string, any>>({});
+
+  async function fetchAppConfig(): Promise<Record<string, any>> {
+    try {
+      const res = await get('/api/local/config');
+      if (res && res.code === 200 && res.data) {
+        appConfig.value = res.data;
+        return res.data;
+      }
+    } catch (err) {
+      console.warn('Failed to fetch app config:', err);
+    }
+    return appConfig.value;
+  }
+
+  async function updateAppConfig(partial: Record<string, any>): Promise<Record<string, any>> {
+    try {
+      appConfig.value = { ...appConfig.value, ...partial };
+      const res = await post('/api/local/config', partial);
+      if (res && res.code === 200 && res.data) {
+        appConfig.value = res.data;
+        return res.data;
+      }
+    } catch (err) {
+      console.warn('Failed to update app config:', err);
+    }
+    return appConfig.value;
+  }
+
   return {
     currentTab,
     themeMode,
@@ -298,6 +330,9 @@ export const useAppStore = defineStore('app', () => {
     saveTokenAndLogin,
     logout,
     refreshFrpInfo,
-    fetchUserInfo: verifyAndFetchUserInfo
+    fetchUserInfo: verifyAndFetchUserInfo,
+    appConfig,
+    fetchAppConfig,
+    updateAppConfig
   };
 });

@@ -41,6 +41,27 @@ function saveAutostartList(list) {
   }
 }
 
+function getAppConfig() {
+  try {
+    const f = path.join(PKG_VAR, 'data', 'config.json');
+    if (fs.existsSync(f)) {
+      return JSON.parse(fs.readFileSync(f, 'utf8'));
+    }
+  } catch {}
+  return {};
+}
+
+function saveAppConfig(cfg) {
+  try {
+    const d = path.join(PKG_VAR, 'data');
+    if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+    const f = path.join(d, 'config.json');
+    fs.writeFileSync(f, JSON.stringify(cfg, null, 2), 'utf8');
+  } catch (err) {
+    console.error('[mslfrp-backend] Failed to save config.json:', err);
+  }
+}
+
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
@@ -329,6 +350,21 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, { code: 200, msg: 'frpc 客户端准备就绪', data: { path: frpcPath } });
       } catch (err) {
         return sendJson(res, 500, { code: 500, msg: `下载 frpc 失败: ${err.message}` });
+      }
+    }
+
+    // 7. General Application Configuration (Persisted in PKG_VAR/data/config.json)
+    if (apiPath === 'config') {
+      if (req.method === 'GET') {
+        const config = getAppConfig();
+        return sendJson(res, 200, { code: 200, data: config });
+      }
+      if (req.method === 'POST') {
+        const body = await parseJsonBody(req);
+        const currentConfig = getAppConfig();
+        const updatedConfig = { ...currentConfig, ...body };
+        saveAppConfig(updatedConfig);
+        return sendJson(res, 200, { code: 200, msg: '配置保存成功', data: updatedConfig });
       }
     }
 

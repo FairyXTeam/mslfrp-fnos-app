@@ -211,7 +211,8 @@ async function fetchNotice(manual = false) {
       if (content.trim()) {
         const hash = simpleNoticeHash(content.trim());
         currentNoticeHash.value = hash;
-        const lastHash = localStorage.getItem('fnos_last_notice_hash');
+        const cfg = await appStore.fetchAppConfig();
+        const lastHash = cfg?.lastNoticeHash;
 
         if (manual) {
           toast.success('公告已更新');
@@ -256,13 +257,13 @@ watch(
 function dismissNoticeModal() {
   showNoticeModal.value = false;
   if (currentNoticeHash.value) {
-    localStorage.setItem('fnos_last_notice_hash', currentNoticeHash.value);
+    appStore.updateAppConfig({ lastNoticeHash: currentNoticeHash.value });
   }
 }
 
 watch(showNoticeModal, (val) => {
   if (!val && currentNoticeHash.value) {
-    localStorage.setItem('fnos_last_notice_hash', currentNoticeHash.value);
+    appStore.updateAppConfig({ lastNoticeHash: currentNoticeHash.value });
   }
 });
 
