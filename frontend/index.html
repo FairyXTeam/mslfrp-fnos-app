@@ -5,6 +5,35 @@
     <link rel="icon" type="image/png" href="/app/mslfrp/images/icon_64.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>MSLFrp 内网映射 - 飞牛私有云</title>
+    <script>
+      (function () {
+        try {
+          var savedTheme = localStorage.getItem('msl_theme');
+          var isDark = false;
+          if (savedTheme === 'dark') {
+            isDark = true;
+          } else if (savedTheme === 'light') {
+            isDark = false;
+          } else {
+            var fnosStored = localStorage.getItem('os-theme-mode') || localStorage.getItem('fnos-theme-mode');
+            if (fnosStored === '20') {
+              isDark = true;
+            } else if (fnosStored === '10') {
+              isDark = false;
+            } else {
+              isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+          }
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="bg-[#f8fafc] dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 antialiased selection:bg-blue-500 selection:text-white overflow-hidden">
     <div id="app"></div>

@@ -16,7 +16,10 @@ import {
   TrashIcon,
   ClipboardDocumentIcon,
   InformationCircleIcon,
-  PaintBrushIcon
+  PaintBrushIcon,
+  SunIcon,
+  MoonIcon,
+  ComputerDesktopIcon
 } from '@heroicons/vue/24/outline';
 
 const appStore = useAppStore();
@@ -256,6 +259,54 @@ function handleReLogin() {
             <div class="flex items-center gap-2 text-[11px] text-zinc-400 dark:text-zinc-500 pt-2 border-t border-zinc-200/60 dark:border-zinc-800/80">
               <span>特性: 沉浸式侧边栏 · 完整应用标识 · 全宽视图</span>
             </div>
+          </div>
+        </div>
+
+        <!-- 颜色主题模式: 跟随系统 / 亮白 / 暗黑 -->
+        <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-col gap-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">主题色彩模式</span>
+            <span class="text-xs text-zinc-400">
+              当前: {{ appStore.themeMode === 'auto' ? '自动 (跟随系统)' : appStore.themeMode === 'dark' ? '深色模式' : '浅色模式' }}
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2.5">
+            <button
+              @click="appStore.setThemeMode('auto')"
+              :class="[
+                'py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer select-none',
+                appStore.themeMode === 'auto'
+                  ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold shadow-xs'
+                  : 'border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-800/30 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
+              ]"
+            >
+              <ComputerDesktopIcon class="w-4 h-4" />
+              <span>跟随系统</span>
+            </button>
+            <button
+              @click="appStore.setThemeMode('light')"
+              :class="[
+                'py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer select-none',
+                appStore.themeMode === 'light'
+                  ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold shadow-xs'
+                  : 'border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-800/30 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
+              ]"
+            >
+              <SunIcon class="w-4 h-4" />
+              <span>亮白模式</span>
+            </button>
+            <button
+              @click="appStore.setThemeMode('dark')"
+              :class="[
+                'py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer select-none',
+                appStore.themeMode === 'dark'
+                  ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold shadow-xs'
+                  : 'border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-800/30 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
+              ]"
+            >
+              <MoonIcon class="w-4 h-4" />
+              <span>暗黑模式</span>
+            </button>
           </div>
         </div>
       </div>

@@ -5,11 +5,30 @@ import { get, post, setAuthToken, getAuthToken } from '../api/client';
 export type ThemeMode = 'auto' | 'light' | 'dark';
 export type LayoutTheme = 'native' | 'fnos';
 
+function getSystemPrefersDark(): boolean {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  return false;
+}
+
 export const useAppStore = defineStore('app', () => {
+  const savedLayout = (typeof localStorage !== 'undefined' ? localStorage.getItem('msl_layout_theme') : null) as LayoutTheme | null;
+  const initialLayout: LayoutTheme = (savedLayout === 'native' || savedLayout === 'fnos') ? savedLayout : 'fnos';
+
+  const savedTheme = (typeof localStorage !== 'undefined' ? localStorage.getItem('msl_theme') : null) as ThemeMode | null;
+  const initialTheme: ThemeMode = (savedTheme === 'dark' || savedTheme === 'light' || savedTheme === 'auto') ? savedTheme : 'auto';
+
+  const initialDark = (function () {
+    if (initialTheme === 'dark') return true;
+    if (initialTheme === 'light') return false;
+    return getSystemPrefersDark();
+  })();
+
   const currentTab = ref<'dashboard' | 'tunnels' | 'domains' | 'shop' | 'settings'>('dashboard');
-  const themeMode = ref<ThemeMode>('auto');
-  const layoutTheme = ref<LayoutTheme>('fnos');
-  const isDarkMode = ref(false);
+  const themeMode = ref<ThemeMode>(initialTheme);
+  const layoutTheme = ref<LayoutTheme>(initialLayout);
+  const isDarkMode = ref(initialDark);
   const isLoggedIn = ref(false);
   const showLoginDialog = ref(false);
   const loadingUser = ref(false);
@@ -41,17 +60,20 @@ export const useAppStore = defineStore('app', () => {
     return !!userInfo.value.realName;
   });
 
-  function setLayoutTheme(theme: LayoutTheme) {
+  function setLayoutTheme(theme: LayoutTheme, syncBackend = true) {
     layoutTheme.value = theme;
-    localStorage.setItem('msl_layout_theme', theme);
+    try {
+      localStorage.setItem('msl_layout_theme', theme);
+    } catch {}
+    if (syncBackend) {
+      updateAppConfig({ layoutTheme: theme });
+    }
   }
 
   function initLayoutTheme() {
-    const saved = localStorage.getItem('msl_layout_theme') as LayoutTheme | null;
+    const saved = (typeof localStorage !== 'undefined' ? localStorage.getItem('msl_layout_theme') : null) as LayoutTheme | null;
     if (saved === 'fnos' || saved === 'native') {
       layoutTheme.value = saved;
-    } else {
-      layoutTheme.value = 'fnos';
     }
   }
 
@@ -68,22 +90,20 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  function getSystemPrefersDark(): boolean {
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  }
-
-  function setThemeMode(mode: ThemeMode) {
+  function setThemeMode(mode: ThemeMode, syncBackend = true) {
     themeMode.value = mode;
-    localStorage.setItem('msl_theme', mode);
+    try {
+      localStorage.setItem('msl_theme', mode);
+    } catch {}
     if (mode === 'auto') {
       applyTheme(getSystemPrefersDark());
     } else if (mode === 'dark') {
       applyTheme(true);
     } else {
       applyTheme(false);
+    }
+    if (syncBackend) {
+      updateAppConfig({ themeMode: mode });
     }
   }
 
@@ -107,9 +127,9 @@ export const useAppStore = defineStore('app', () => {
 
   function initTheme() {
     initLayoutTheme();
-    const saved = localStorage.getItem('msl_theme') as ThemeMode | null;
+    const saved = (typeof localStorage !== 'undefined' ? localStorage.getItem('msl_theme') : null) as ThemeMode | null;
     const mode: ThemeMode = (saved === 'dark' || saved === 'light' || saved === 'auto') ? saved : 'auto';
-    setThemeMode(mode);
+    setThemeMode(mode, false);
 
     // Listen to Browser / OS Theme changes in real time
     if (typeof window !== 'undefined' && window.matchMedia) {
@@ -303,6 +323,29 @@ export const useAppStore = defineStore('app', () => {
       const res = await get('/api/local/config');
       if (res && res.code === 200 && res.data) {
         appConfig.value = res.data;
+
+        // Dynamic update layout theme from backend config
+        if (res.data.layoutTheme && (res.data.layoutTheme === 'fnos' || res.data.layoutTheme === 'native')) {
+          if (layoutTheme.value !== res.data.layoutTheme) {
+            setLayoutTheme(res.data.layoutTheme, false);
+          }
+        }
+
+        // Dynamic update color theme mode from backend config
+        if (res.data.themeMode && (res.data.themeMode === 'auto' || res.data.themeMode === 'dark' || res.data.themeMode === 'light')) {
+          if (themeMode.value !== res.data.themeMode) {
+            setThemeMode(res.data.themeMode, false);
+          }
+        }
+
+        // If backend config is missing layout or theme settings, seed it with current local settings
+        if (!res.data.layoutTheme || !res.data.themeMode) {
+          const toSync: Record<string, any> = {};
+          if (!res.data.layoutTheme) toSync.layoutTheme = layoutTheme.value;
+          if (!res.data.themeMode) toSync.themeMode = themeMode.value;
+          updateAppConfig(toSync);
+        }
+
         return res.data;
       }
     } catch (err) {
