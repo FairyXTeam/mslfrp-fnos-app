@@ -59,6 +59,33 @@ class CloudProxy {
   constructor() {
     this.sessions = new Map();
     this.wechatSessions = new Map();
+    this.lastRenewedAt = 0;
+  }
+
+  async renewToken(token) {
+    if (!token) return false;
+    const now = Date.now();
+    // Throttle: avoid renewing more frequently than every 6 hours
+    if (this.lastRenewedAt && (now - this.lastRenewedAt < 6 * 3600 * 1000)) {
+      return true;
+    }
+
+    try {
+      const resp = await requestHttpsJson('POST', '/api/user/renewToken', null, {
+        Authorization: `Bearer ${token}`
+      });
+
+      if (resp && resp.data && resp.data.code === 200) {
+        this.lastRenewedAt = now;
+        console.log('[cloudProxy] Token successfully renewed on MSL Cloud for 30 days');
+        return true;
+      } else {
+        console.warn(`[cloudProxy] Token renewal response: ${resp?.data?.msg || resp?.status}`);
+      }
+    } catch (err) {
+      console.warn(`[cloudProxy] Token renewal request error: ${err.message}`);
+    }
+    return false;
   }
 
   getToken(pkgVar) {
@@ -355,6 +382,9 @@ class CloudProxy {
             frpInfo = frpResp.data.data;
           }
         } catch {}
+
+        // Automatically renew token for another 30 days in background
+        this.renewToken(token).catch(() => {});
 
         return {
           code: 200,

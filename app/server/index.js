@@ -469,6 +469,21 @@ function runAutostartTunnels() {
   }, 3000);
 }
 
+// Background keeper: keep user token automatically renewed every 12 hours
+function startTokenRenewalKeeper() {
+  const RENEW_INTERVAL = 12 * 3600 * 1000;
+  setInterval(async () => {
+    try {
+      const token = cloudProxy.getToken(PKG_VAR);
+      if (token) {
+        await cloudProxy.renewToken(token);
+      }
+    } catch (err) {
+      console.warn('[mslfrp-backend] Scheduled token renewal error:', err.message);
+    }
+  }, RENEW_INTERVAL);
+}
+
 if (SOCKET_PATH) {
   if (fs.existsSync(SOCKET_PATH)) {
     try { fs.unlinkSync(SOCKET_PATH); } catch {}
@@ -477,11 +492,13 @@ if (SOCKET_PATH) {
     try { fs.chmodSync(SOCKET_PATH, 0o777); } catch {}
     console.log(`[mslfrp-backend] Server listening on socket: ${SOCKET_PATH}`);
     runAutostartTunnels();
+    startTokenRenewalKeeper();
   });
 } else if (PORT) {
   server.listen(PORT, '127.0.0.1', () => {
     console.log(`[mslfrp-backend] Server listening on local HTTP port: 127.0.0.1:${PORT}`);
     runAutostartTunnels();
+    startTokenRenewalKeeper();
   });
 }
 
