@@ -1,6 +1,6 @@
 {
   "name": "mslfrp-fnos-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MSL FRP Backend Service for fnOS",
   "main": "index.js",
   "scripts": {

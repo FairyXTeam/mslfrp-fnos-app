@@ -34,7 +34,7 @@ function extractChangelogFromMd(targetVersion) {
   const changelogPath = path.join(ROOT_DIR, 'CHANGELOGS.md');
   if (fs.existsSync(changelogPath)) {
     const content = fs.readFileSync(changelogPath, 'utf8');
-    const verPattern = targetVersion ? targetVersion.replace(/\./g, '\\.') : '[0-9.]+';
+    const verPattern = targetVersion ? (targetVersion.includes('.') && targetVersion.split('.').length === 2 ? `${targetVersion.replace(/\./g, '\\.')}(\\.0)?` : targetVersion.replace(/\./g, '\\.')) : '[0-9.]+';
     const regex = new RegExp(`##\\s*\\[?v?${verPattern}\\]?[^\\n]*\\n([\\s\\S]*?)(?=\\n##|\\s*$)`, 'i');
     let match = content.match(regex);
     if (!match) {
