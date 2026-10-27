@@ -46,7 +46,7 @@ onMounted(() => {
     :class="[
       'flex h-screen w-screen overflow-hidden text-zinc-900 dark:text-zinc-100 select-none',
       appStore.layoutTheme === 'fnos'
-        ? 'bg-[#f3f3f3] dark:bg-[#16161a]'
+        ? 'bg-[#f3f3f3] dark:bg-[#0c0c0d]'
         : 'bg-[#f8fafc] dark:bg-[#09090b]'
     ]"
   >

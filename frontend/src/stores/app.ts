@@ -131,15 +131,31 @@ export const useAppStore = defineStore('app', () => {
       window.addEventListener('message', (event) => {
         if (!event.data) return;
         const msg = event.data;
-        if (msg.type === 'theme-change' || msg.event === 'theme' || msg.action === 'theme') {
-          const targetTheme = msg.theme || msg.data;
+        const targetTheme = msg.theme ?? msg.themeMode ?? msg.mode ?? msg.data;
+        if (msg.type === 'theme-change' || msg.event === 'theme' || msg.action === 'theme' || msg.type === 'theme') {
           if (themeMode.value === 'auto') {
-            if (targetTheme === 'dark') applyTheme(true);
-            else if (targetTheme === 'light') applyTheme(false);
+            if (targetTheme === 'dark' || targetTheme === 20) applyTheme(true);
+            else if (targetTheme === 'light' || targetTheme === 10) applyTheme(false);
             else applyTheme(getSystemPrefersDark());
           }
         }
       });
+
+      // Observe DOM class / attribute changes (e.g. if fnOS desktop or injected script mutates html or body)
+      if (typeof MutationObserver !== 'undefined') {
+        const domObserver = new MutationObserver(() => {
+          if (themeMode.value === 'auto') {
+            const isHtmlDark = document.documentElement.classList.contains('dark');
+            const isBodyDark = document.body.classList.contains('dark') || document.body.getAttribute('theme-mode') === 'dark';
+            const hasDark = isHtmlDark || isBodyDark;
+            if (isDarkMode.value !== hasDark) {
+              applyTheme(hasDark);
+            }
+          }
+        });
+        domObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+        domObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'theme-mode', 'data-theme'] });
+      }
     }
   }
 

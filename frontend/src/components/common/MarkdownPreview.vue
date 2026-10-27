@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { config, MdPreview } from 'md-editor-v3';
 import 'md-editor-v3/lib/preview.css';
 import { useAppStore } from '../../stores/app';
@@ -27,13 +27,38 @@ const props = withDefaults(defineProps<Props>(), {
 
 const appStore = useAppStore();
 
+const domDark = ref(false);
+
+function updateDomDark() {
+  if (typeof document !== 'undefined') {
+    domDark.value =
+      document.documentElement.classList.contains('dark') ||
+      document.body.classList.contains('dark') ||
+      document.body.getAttribute('theme-mode') === 'dark';
+  }
+}
+
+let observer: MutationObserver | null = null;
+onMounted(() => {
+  updateDomDark();
+  if (typeof MutationObserver !== 'undefined') {
+    observer = new MutationObserver(() => {
+      updateDomDark();
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'theme-mode', 'data-theme'] });
+  }
+});
+
+onUnmounted(() => {
+  observer?.disconnect();
+  observer = null;
+});
+
 const isDark = computed(() => {
   if (appStore.themeMode === 'dark') return true;
   if (appStore.themeMode === 'light') return false;
-  if (typeof document !== 'undefined') {
-    return document.documentElement.classList.contains('dark');
-  }
-  return false;
+  return appStore.isDarkMode || domDark.value;
 });
 
 const mdTheme = computed(() => (isDark.value ? 'dark' : 'light'));
@@ -43,6 +68,7 @@ const codeTheme = computed(() => (isDark.value ? 'github' : 'atom'));
 <template>
   <div class="mslx-md-wrapper transition-colors duration-200">
     <MdPreview
+      :key="mdTheme"
       :editor-id="editorId"
       :model-value="content"
       :theme="mdTheme"
@@ -192,9 +218,46 @@ const codeTheme = computed(() => (isDark.value ? 'github' : 'atom'));
   margin: 0.5rem 0 !important;
 }
 
+/* Dark mode pure white text - strictly matching mslx-plugins-market-frontend commit 0be1b02 */
 :deep(.md-editor-dark .vuepress-theme),
-:deep(.md-editor-dark.vuepress-theme) {
-  --md-theme-color: #f4f4f5 !important;
+:deep(.md-editor-dark.vuepress-theme),
+:deep([data-theme='dark'] .vuepress-theme),
+:deep([data-theme='dark'].vuepress-theme),
+:deep(.md-editor[data-theme='dark'] .vuepress-theme),
+:global(.dark) :deep(.vuepress-theme),
+:global(.dark) :deep(.md-editor-preview),
+:global(.dark) :deep(.md-editor) {
+  --md-theme-color: #ffffff !important;
   --md-theme-heading-color: #ffffff !important;
+  --md-color: #ffffff !important;
+  color: #ffffff !important;
+}
+
+:global(.dark) :deep(.vuepress-theme p),
+:global(.dark) :deep(.vuepress-theme li),
+:global(.dark) :deep(.vuepress-theme ul),
+:global(.dark) :deep(.vuepress-theme ol),
+:global(.dark) :deep(.vuepress-theme span),
+:deep([data-theme='dark'] .vuepress-theme p),
+:deep([data-theme='dark'] .vuepress-theme li),
+:deep([data-theme='dark'] .vuepress-theme ul),
+:deep([data-theme='dark'] .vuepress-theme ol),
+:deep([data-theme='dark'] .vuepress-theme span) {
+  color: #ffffff !important;
+}
+
+:global(.dark) :deep(.vuepress-theme h1),
+:global(.dark) :deep(.vuepress-theme h2),
+:global(.dark) :deep(.vuepress-theme h3),
+:global(.dark) :deep(.vuepress-theme h4),
+:global(.dark) :deep(.vuepress-theme h5),
+:global(.dark) :deep(.vuepress-theme h6),
+:deep([data-theme='dark'] .vuepress-theme h1),
+:deep([data-theme='dark'] .vuepress-theme h2),
+:deep([data-theme='dark'] .vuepress-theme h3),
+:deep([data-theme='dark'] .vuepress-theme h4),
+:deep([data-theme='dark'] .vuepress-theme h5),
+:deep([data-theme='dark'] .vuepress-theme h6) {
+  color: #ffffff !important;
 }
 </style>
