@@ -29,10 +29,8 @@ const authStatus = ref<'idle' | 'waiting' | 'success' | 'expired'>('idle');
 let authWindowRef: Window | null = null;
 
 // Tab 2: WeChat Mini-Program Login state
-const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const wechatLoading = ref(false);
 const wechatQrCode = ref('');
-const wechatUrlLink = ref('');
 const wechatSessionId = ref('');
 const wechatStatus = ref<'pending' | 'scanned' | 'expired'>('pending');
 let wechatPollTimer: any = null;
@@ -178,27 +176,19 @@ function fallbackCopy(text: string) {
 }
 
 // 2. WeChat Mini-Program Login (Tab 2)
-function openWechatLink() {
-  if (wechatUrlLink.value) {
-    window.location.href = wechatUrlLink.value;
-  }
-}
-
 async function startWechatFlow() {
   stopWechatPolling();
   wechatLoading.value = true;
   wechatQrCode.value = '';
-  wechatUrlLink.value = '';
   wechatSessionId.value = '';
   wechatStatus.value = 'pending';
 
   try {
     const res = await post('/api/local/auth/wechat/start', {
-      type: isMobile.value ? 'url' : 'qrcode'
+      type: 'qrcode'
     });
     if (res && res.code === 200 && res.data) {
       wechatQrCode.value = res.data.qrcode || '';
-      wechatUrlLink.value = res.data.urlLink || '';
       wechatSessionId.value = res.data.sessionId || '';
       startWechatPolling(res.data.sessionId);
     } else {
@@ -383,65 +373,50 @@ onUnmounted(() => {
       </div>
 
       <!-- ============================================ -->
-      <!-- TAB 2: WeChat Mini-Program (微信小程序/直接授权登录) -->
+      <!-- TAB 2: WeChat Mini-Program (微信小程序扫码登录) -->
       <!-- ============================================ -->
       <div v-else-if="activeTab === 'wechat'" class="w-full flex flex-col items-center text-center">
         <div v-if="wechatLoading" class="py-12 flex flex-col items-center gap-3 text-zinc-400">
           <ArrowPathIcon class="w-7 h-7 animate-spin text-emerald-500" />
-          <span class="text-xs">{{ isMobile ? '正在准备微信授权...' : '正在生成小程序码...' }}</span>
+          <span class="text-xs">正在生成小程序码...</span>
         </div>
 
         <div v-else class="flex flex-col items-center w-full">
           <div class="mb-4">
             <h4 class="text-base font-bold text-zinc-900 dark:text-white m-0 tracking-tight">
-              {{ isMobile ? '微信快捷授权登录' : '微信扫码登录' }}
+              微信扫码登录
             </h4>
             <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1 m-0">
-              {{ isMobile ? '点击下方按钮直接唤起微信完成快速授权' : '请使用微信扫描下方小程序码' }}
+              请使用微信扫描下方小程序码
             </p>
           </div>
 
-          <!-- Mobile Direct Open Button -->
-          <div v-if="isMobile && wechatUrlLink" class="w-full flex flex-col items-center py-4 gap-3">
-            <button
-              type="button"
-              @click="openWechatLink"
-              class="w-full max-w-xs py-3.5 px-6 rounded-2xl bg-[#07c160] hover:bg-[#06ad56] active:scale-[0.99] text-white text-sm font-bold flex items-center justify-center gap-2 cursor-pointer border-0 shadow-lg shadow-emerald-500/20 transition-all"
-            >
-              <ChatBubbleLeftRightIcon class="w-5 h-5 stroke-[2]" />
-              <span>跳转微信授权</span>
-            </button>
-            <p class="text-xs text-zinc-400 m-0">若未自动唤起，可点击上方按钮重新打开</p>
-          </div>
-
-          <!-- Desktop QR Code Frame (or fallback if urlLink not available) -->
-          <template v-else>
-            <div class="relative p-2.5 bg-white rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
-              <img
-                v-if="wechatQrCode"
-                :src="wechatQrCode"
-                alt="微信小程序码"
-                class="w-48 h-48 block rounded-xl object-contain"
-              />
-              <div v-else class="w-48 h-48 flex items-center justify-center text-xs text-zinc-400">
-                加载中...
-              </div>
-
-              <!-- Expired Mask -->
-              <div
-                v-if="wechatStatus === 'expired'"
-                class="absolute inset-0 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-xs"
-              >
-                <span class="text-zinc-500 font-medium">二维码已失效</span>
-                <button
-                  @click="startWechatFlow"
-                  class="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold cursor-pointer border-0 shadow-sm"
-                >
-                  刷新二维码
-                </button>
-              </div>
+          <!-- Mini-Program QR Code Frame -->
+          <div class="relative p-2.5 bg-white rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
+            <img
+              v-if="wechatQrCode"
+              :src="wechatQrCode"
+              alt="微信小程序码"
+              class="w-48 h-48 block rounded-xl object-contain"
+            />
+            <div v-else class="w-48 h-48 flex items-center justify-center text-xs text-zinc-400">
+              加载中...
             </div>
-          </template>
+
+            <!-- Expired Mask -->
+            <div
+              v-if="wechatStatus === 'expired'"
+              class="absolute inset-0 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-xs"
+            >
+              <span class="text-zinc-500 font-medium">二维码已失效</span>
+              <button
+                @click="startWechatFlow"
+                class="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold cursor-pointer border-0 shadow-sm"
+              >
+                刷新二维码
+              </button>
+            </div>
+          </div>
 
           <!-- Status badge -->
           <div class="mt-4 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">

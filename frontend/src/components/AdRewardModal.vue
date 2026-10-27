@@ -7,8 +7,7 @@ import {
   GiftIcon,
   ClockIcon,
   InformationCircleIcon,
-  ExclamationTriangleIcon,
-  ArrowTopRightOnSquareIcon
+  ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
@@ -22,8 +21,6 @@ const emit = defineEmits<{
 const loading = ref(false);
 const adRewardStatus = ref<any>(null);
 const adQrCodeImage = ref('');
-const urlLink = ref('');
-const isMobile = ref(false);
 
 function formatTimestamp(ts: number | string) {
   if (!ts) return '请稍后再试';
@@ -41,7 +38,6 @@ async function loadAdRewardData() {
   loading.value = true;
   adRewardStatus.value = null;
   adQrCodeImage.value = '';
-  urlLink.value = '';
 
   try {
     const statusRes = await get('/api/user/ad-reward/status');
@@ -57,34 +53,18 @@ async function loadAdRewardData() {
       return;
     }
 
-    isMobile.value = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-    if (isMobile.value) {
-      const res = await get('/api/user/ad-reward/qrcode?mode=url');
-      if (res && res.code === 200 && res.data) {
-        urlLink.value = res.data;
-      } else {
-        toast.error(res?.msg || '获取跳转链接失败');
-      }
+    // Always fetch mini-program QR code for both desktop and mobile
+    const res = await get('/api/user/ad-reward/qrcode?mode=qrcode');
+    if (res && res.code === 200 && res.data) {
+      adQrCodeImage.value = res.data;
     } else {
-      const res = await get('/api/user/ad-reward/qrcode?mode=qrcode');
-      if (res && res.code === 200 && res.data) {
-        adQrCodeImage.value = res.data;
-      } else {
-        toast.error(res?.msg || '获取二维码失败');
-      }
+      toast.error(res?.msg || '获取小程序码失败');
     }
   } catch (err: any) {
     toast.error('网络请求失败，请稍后重试');
     emit('update:modelValue', false);
   } finally {
     loading.value = false;
-  }
-}
-
-function handleOpenUrlLink() {
-  if (urlLink.value) {
-    window.location.href = urlLink.value;
   }
 }
 
@@ -134,8 +114,8 @@ watch(
         </div>
       </div>
 
-      <!-- Active QR Code or Mobile URL Link -->
-      <div v-else-if="adQrCodeImage || urlLink" class="flex flex-col items-center w-full">
+      <!-- Active QR Code (Mini-Program Code) -->
+      <div v-else-if="adQrCodeImage" class="flex flex-col items-center w-full">
         <!-- Daily remaining quota badge -->
         <div class="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full border border-zinc-200/80 dark:border-zinc-700">
           今日可用次数:
@@ -145,26 +125,13 @@ watch(
           次
         </div>
 
-        <!-- Mobile: Jump to WeChat Button -->
-        <template v-if="isMobile">
-          <button
-            @click="handleOpenUrlLink"
-            class="w-52 h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer border-0 transition-all my-3"
-          >
-            <span>跳转微信赚积分</span>
-            <ArrowTopRightOnSquareIcon class="w-4 h-4" />
-          </button>
-        </template>
-
-        <!-- Desktop: QR Code Scanner -->
-        <template v-else>
-          <div class="relative p-2 bg-white rounded-2xl border border-zinc-200/80 dark:border-zinc-700 shadow-sm my-0.5">
-            <img :src="adQrCodeImage" alt="小程序二维码" class="w-36 h-36 sm:w-40 sm:h-40 rounded-xl object-contain block" />
-          </div>
-        </template>
+        <!-- Mini-Program QR Code Frame -->
+        <div class="relative p-2 bg-white rounded-2xl border border-zinc-200/80 dark:border-zinc-700 shadow-sm my-0.5">
+          <img :src="adQrCodeImage" alt="小程序码" class="w-36 h-36 sm:w-40 sm:h-40 rounded-xl object-contain block" />
+        </div>
 
         <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-300 text-center leading-relaxed m-0">
-          请使用 <strong class="text-emerald-600 dark:text-emerald-400">微信{{ isMobile ? '打开' : '扫一扫' }}</strong> 观看视频广告<br />
+          请使用 <strong class="text-emerald-600 dark:text-emerald-400">微信扫一扫</strong> 观看视频广告<br />
           即可随机获得
           <strong class="text-emerald-600 dark:text-emerald-400">{{ adRewardStatus.minScore }} ~ {{ adRewardStatus.maxScore }}</strong>
           积分！

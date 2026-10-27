@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, onDeactivated, computed } from 'vue';
 import QRCode from 'qrcode';
 import { toast } from '../utils/toast';
+import { confirmModal } from '../utils/confirm';
 import { get, post } from '../api/client';
 import { useAppStore } from '../stores/app';
 import BaseModal from '../components/common/BaseModal.vue';
@@ -163,13 +164,31 @@ async function handlePay() {
     return;
   }
 
+  const isMob = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+  isMobile.value = isMob;
+
+  // Mobile WeChat Pay prompt
+  if (isMob && payMethod.value === 'wxpay') {
+    const confirmed = await confirmModal({
+      title: '微信支付提示',
+      message: '移动端暂不支持直接拉起微信支付，请前往 PC 端客户端或 MSL 用户中心 (user.mslmc.net) 使用微信支付充值，或选用支付宝支付。',
+      confirmText: '前往 MSL 用户中心',
+      cancelText: '改用支付宝支付',
+      type: 'warning'
+    });
+
+    if (confirmed) {
+      window.open('https://user.mslmc.net/user/shop', '_blank');
+    } else {
+      payMethod.value = 'alipay';
+    }
+    return;
+  }
+
   paying.value = true;
   stopPolling();
 
   try {
-    const isMob = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
-    isMobile.value = isMob;
-
     const res = await post('/api/shop/pay', {
       price: amount,
       pay: payMethod.value,
@@ -191,11 +210,6 @@ async function handlePay() {
 
         payDialogVisible.value = true;
         startPollingOrder(currentOrderNo.value);
-
-        // If mobile WeChat pay, auto-trigger jump scheme
-        if (isMob && payMethod.value === 'wxpay') {
-          window.location.href = payUrl;
-        }
       } else {
         toast.error('未能获取支付链接');
       }
@@ -463,6 +477,10 @@ function startPollingOrder(orderNo: string) {
               <span>微信支付</span>
             </button>
           </div>
+          <!-- Mobile WeChat Pay Prompt -->
+          <p v-if="isMobile && payMethod === 'wxpay'" class="text-[11px] text-amber-600 dark:text-amber-400 m-0 leading-relaxed">
+            提示：移动端暂无法直接拉起微信支付，请前往 PC 端客户端或 MSL 用户中心充值，或改用支付宝支付。
+          </p>
         </div>
 
         <button
@@ -580,48 +598,27 @@ function startPollingOrder(orderNo: string) {
           </span>
         </div>
 
-        <!-- Mobile WeChat Pay Direct Jump (No photo album scan) -->
-        <div v-if="isMobile && payMethod === 'wxpay'" class="w-full flex flex-col items-center gap-3 py-2">
-          <div class="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
-            <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24">
-              <path d="M8.5 2C4.36 2 1 4.91 1 8.5c0 1.99 1.01 3.77 2.6 4.96-.11.66-.46 2.03-.52 2.32-.08.38.14.37.3.26.12-.08 1.63-1.09 2.38-1.61.88.24 1.8.37 2.74.37.28 0 .56-.02.83-.05-.44-.9-.69-1.9-.69-2.95 0-3.87 3.58-7 8-7 .23 0 .46.01.69.04C16.2 3.8 12.63 2 8.5 2zm10 6c-3.87 0-7 2.69-7 6s3.13 6 7 6c.82 0 1.6-.13 2.33-.36.65.45 1.97 1.33 2.07 1.4.14.1.33.1.26-.23-.05-.25-.36-1.44-.45-2.02 1.38-1.04 2.29-2.59 2.29-4.79 0-3.31-3.13-6-7-6z"/>
-            </svg>
+        <!-- Payment Display: Desktop QR Code or Mobile Alipay Button -->
+        <div class="p-3 bg-white rounded-2xl border border-zinc-200 shadow-sm">
+          <img v-if="qrDataUrl" :src="qrDataUrl" alt="支付二维码" class="w-44 h-44 block" />
+          <div v-else class="w-44 h-44 flex items-center justify-center text-xs text-zinc-400">
+            二维码生成中...
           </div>
-          <p class="text-xs text-zinc-500 dark:text-zinc-400 m-0 leading-relaxed max-w-xs">
-            微信扫一扫不支持相册识别支付码，请点击下方按钮拉起微信完成付款
-          </p>
-          <button
-            type="button"
-            @click="redirectMobilePay"
-            class="w-full py-3 px-4 rounded-xl bg-[#00C250] hover:bg-[#00a644] active:scale-[0.99] text-white text-xs font-bold border-0 shadow-md cursor-pointer transition-all flex items-center justify-center gap-2"
-          >
-            <span>一键拉起微信支付</span>
-          </button>
         </div>
 
-        <!-- Desktop QR Code or Mobile Alipay fallback -->
-        <template v-else>
-          <div class="p-3 bg-white rounded-2xl border border-zinc-200 shadow-sm">
-            <img v-if="qrDataUrl" :src="qrDataUrl" alt="支付二维码" class="w-44 h-44 block" />
-            <div v-else class="w-44 h-44 flex items-center justify-center text-xs text-zinc-400">
-              二维码生成中...
-            </div>
-          </div>
+        <!-- Mobile Alipay Direct Jump Button -->
+        <button
+          v-if="isMobile && payMethod === 'alipay' && rawPayUrl"
+          type="button"
+          @click="redirectMobilePay"
+          class="w-full py-2.5 px-4 rounded-xl bg-[#1677FF] hover:bg-[#1260cc] active:scale-[0.99] text-white text-xs font-bold border-0 shadow-md cursor-pointer transition-all flex items-center justify-center gap-2"
+        >
+          <span>一键拉起支付宝 App 支付</span>
+        </button>
 
-          <!-- Mobile Alipay Direct Jump Button -->
-          <button
-            v-if="isMobile && payMethod === 'alipay' && rawPayUrl"
-            type="button"
-            @click="redirectMobilePay"
-            class="w-full py-2.5 px-4 rounded-xl bg-[#1677FF] hover:bg-[#1260cc] active:scale-[0.99] text-white text-xs font-bold border-0 shadow-md cursor-pointer transition-all flex items-center justify-center gap-2"
-          >
-            <span>一键拉起支付宝 App 支付</span>
-          </button>
-
-          <span v-else class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            请使用 {{ payMethod === 'alipay' ? '支付宝' : '微信' }} App 扫一扫完成支付
-          </span>
-        </template>
+        <span v-else class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+          请使用 {{ payMethod === 'alipay' ? '支付宝' : '微信' }} App 扫一扫完成支付
+        </span>
 
         <!-- Check payment status button -->
         <button
