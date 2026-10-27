@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -38,10 +40,34 @@ jobs:
           # Strip leading 'v'
           VERSION="${RAW_TAG#v}"
           if [ -z "$VERSION" ]; then
-            VERSION="1.0.0"
+            VERSION="1.0.1"
           fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Building with target version: $VERSION"
+
+      - name: Extract Release Notes from CHANGELOGS.md
+        run: |
+          node -e "
+            const fs = require('fs');
+            const targetVer = '${{ steps.get_version.outputs.VERSION }}';
+            let notes = '';
+            if (fs.existsSync('CHANGELOGS.md')) {
+              const content = fs.readFileSync('CHANGELOGS.md', 'utf8');
+              const verPattern = targetVer.replace(/\\./g, '\\\\.');
+              const regex = new RegExp('##\\\\s*\\\\[?v?' + verPattern + '\\\\]?[^\\\\n]*\\\\n([\\\\s\\\\S]*?)(?=\\\\n##|\\\\s*$)', 'i');
+              let match = content.match(regex);
+              if (!match) {
+                match = content.match(/##\s*\[?[^\]\n]+\]?[^\n]*\n([\s\S]*?)(?=\n##|\s*$)/);
+              }
+              if (match && match[1]) {
+                notes = match[1].trim();
+              }
+            }
+            if (!notes) {
+              notes = 'MSLFrp v' + targetVer + ' 更新发布。';
+            }
+            fs.writeFileSync('RELEASE_NOTES.md', notes, 'utf8');
+          "
 
       - name: Build fnOS .fpk Packages
         env:
@@ -53,6 +79,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+          body_path: RELEASE_NOTES.md
           files: dist_fpk/*.fpk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

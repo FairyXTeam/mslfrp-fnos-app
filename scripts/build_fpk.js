@@ -27,6 +27,34 @@ if (!fs.existsSync(manifestPath)) {
   process.exit(1);
 }
 
+function extractChangelogFromMd(targetVersion) {
+  if (process.env.APP_CHANGELOG) {
+    return process.env.APP_CHANGELOG.replace(/\r?\n/g, '<br>');
+  }
+  const changelogPath = path.join(ROOT_DIR, 'CHANGELOGS.md');
+  if (fs.existsSync(changelogPath)) {
+    const content = fs.readFileSync(changelogPath, 'utf8');
+    const verPattern = targetVersion ? targetVersion.replace(/\./g, '\\.') : '[0-9.]+';
+    const regex = new RegExp(`##\\s*\\[?v?${verPattern}\\]?[^\\n]*\\n([\\s\\S]*?)(?=\\n##|\\s*$)`, 'i');
+    let match = content.match(regex);
+    if (!match) {
+      match = content.match(/##\s*\[?[^\]\n]+\]?[^\n]*\n([\s\S]*?)(?=\n##|\s*$)/);
+    }
+    const block = match ? match[1] : null;
+    if (block) {
+      const items = block
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l.startsWith('-') || l.startsWith('*'))
+        .map(l => l.replace(/^[-*]\s*/, '').replace(/\*\*([^*]+)\*\*[：:]\s*/, '$1: '));
+      if (items.length > 0) {
+        return items.map((item, idx) => `${idx + 1}. ${item}`).join('<br>');
+      }
+    }
+  }
+  return '';
+}
+
 let baseManifest = fs.readFileSync(manifestPath, 'utf8');
 const appnameMatch = baseManifest.match(/^appname=(.+)$/m);
 const versionMatch = baseManifest.match(/^version=(.+)$/m);
@@ -121,6 +149,17 @@ for (const target of TARGETS) {
   }
   // Ensure no os_min_version block
   targetManifest = targetManifest.replace(/^os_min_version=.*$/m, '').trim();
+
+  // Inject or update changelog from CHANGELOGS.md
+  const changelog = extractChangelogFromMd(version);
+  if (changelog) {
+    if (targetManifest.match(/^changelog=.*$/m)) {
+      targetManifest = targetManifest.replace(/^changelog=.*$/m, `changelog=${changelog}`);
+    } else {
+      targetManifest += `\nchangelog=${changelog}`;
+    }
+  }
+
   // Remove existing checksum if present
   targetManifest = targetManifest.replace(/^checksum=.*$/m, '').trim();
   // Append checksum
