@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { get, post, setAuthToken, getAuthToken } from '../api/client';
+import { toast } from '../utils/toast';
+import { confirmModal } from '../utils/confirm';
+import { useTunnelsStore } from './tunnels';
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
 export type LayoutTheme = 'native' | 'fnos';
@@ -218,14 +221,28 @@ export const useAppStore = defineStore('app', () => {
         }
 
         isLoggedIn.value = true;
+
+        // If backend detected an account switch, toast warning and sync tunnels store
+        if (res.data.accountSwitched) {
+          toast.warning('检测到切换登录账号，已自动停止前账号运行的隧道');
+          try {
+            const tunnelsStore = useTunnelsStore();
+            tunnelsStore.fetchTunnels(true);
+            tunnelsStore.fetchStatus();
+          } catch {}
+        }
+
         return true;
       } else {
-        await logout(false);
+        // Token invalid or expired. Do NOT wipe credentials or kill background tunnels!
+        isLoggedIn.value = false;
+        userInfo.value.username = '未登录';
         return false;
       }
     } catch (e) {
       console.warn('[Auth] Token validation failure:', e);
-      await logout(false);
+      isLoggedIn.value = false;
+      userInfo.value.username = '未登录';
       return false;
     } finally {
       loadingUser.value = false;
@@ -257,7 +274,21 @@ export const useAppStore = defineStore('app', () => {
     await verifyAndFetchUserInfo();
   }
 
-  async function logout(promptDialog = true) {
+  async function logout(promptConfirm?: boolean | Event) {
+    const shouldPrompt = promptConfirm !== false;
+    if (shouldPrompt) {
+      const confirmed = await confirmModal({
+        title: '退出登录确认',
+        message: '确定要退出当前登录账号吗？已启动的隧道将保持在后台运行，不会被关闭。',
+        confirmText: '退出登录',
+        cancelText: '取消',
+        type: 'danger'
+      });
+      if (!confirmed) {
+        return false;
+      }
+    }
+
     try {
       await get('/api/user/logout');
     } catch {}
@@ -284,9 +315,9 @@ export const useAppStore = defineStore('app', () => {
       frpToken: '',
       boundLimit: 0
     };
-    if (promptDialog) {
-      showLoginDialog.value = true;
-    }
+    toast.info('已退出登录，后台隧道保持运行');
+    showLoginDialog.value = true;
+    return true;
   }
 
   async function refreshFrpInfo() {

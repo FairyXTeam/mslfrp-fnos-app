@@ -164,21 +164,53 @@ class FrpcManager {
 
     const frpcBin = await this.ensureFrpc(appDest);
 
-    // 1. Fetch live dynamic configuration in TOML format from MSL Cloud API
-    console.log(`[frpcManager] Fetching dynamic config for tunnel ${numericId}...`);
-    const configUrl = `https://user.mslmc.net/api/frp/getTunnelConfig?id=${numericId}&format=toml`;
-    const configRes = await this.fetchJson(configUrl, {
-      headers: {
-        'Authorization': `Bearer ${userToken}`,
-        'User-Agent': 'MSL-FRP-fnOS/1.0.0'
-      }
-    });
+    // 1. Fetch live dynamic configuration in TOML format from MSL Cloud API, or fallback to persistent cached config
+    let tomlContent = '';
+    const persistentDir = path.join(pkgVar, 'data', 'configs');
+    const persistentConfigFile = path.join(persistentDir, `tunnel_${numericId}.toml`);
 
-    if (!configRes || configRes.code !== 200 || !configRes.data) {
-      throw new Error(configRes?.msg || '从 MSL 云端获取动态穿透配置失败');
+    if (userToken) {
+      try {
+        console.log(`[frpcManager] Fetching dynamic config for tunnel ${numericId}...`);
+        const configUrl = `https://user.mslmc.net/api/frp/getTunnelConfig?id=${numericId}&format=toml`;
+        const configRes = await this.fetchJson(configUrl, {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'User-Agent': 'MSL-FRP-fnOS/1.0.0'
+          }
+        });
+
+        if (configRes && configRes.code === 200 && configRes.data) {
+          tomlContent = configRes.data;
+          try {
+            if (!fs.existsSync(persistentDir)) fs.mkdirSync(persistentDir, { recursive: true });
+            fs.writeFileSync(persistentConfigFile, tomlContent, 'utf8');
+          } catch (e) {
+            console.warn(`[frpcManager] Failed to persist config for tunnel ${numericId}:`, e.message);
+          }
+        } else {
+          console.warn(`[frpcManager] Live config fetch returned error: ${configRes?.msg || 'unknown'}`);
+        }
+      } catch (err) {
+        console.warn(`[frpcManager] Live config fetch request failed: ${err.message}`);
+      }
     }
 
-    const tomlContent = configRes.data;
+    // Fallback to persistent cached config if live fetch could not be obtained (e.g. login expired or offline)
+    if (!tomlContent) {
+      if (fs.existsSync(persistentConfigFile)) {
+        try {
+          tomlContent = fs.readFileSync(persistentConfigFile, 'utf8');
+          console.log(`[frpcManager] Using persistent cached configuration for tunnel ${numericId}`);
+        } catch (e) {
+          console.warn(`[frpcManager] Failed to read cached config for tunnel ${numericId}:`, e.message);
+        }
+      }
+    }
+
+    if (!tomlContent) {
+      throw new Error('获取隧道穿透配置失败，且无本地持久化配置缓存');
+    }
 
     // 2. Write runtime temporary configuration
     const tempDir = '/tmp/mslfrp';
@@ -443,6 +475,29 @@ class FrpcManager {
     try {
       execFile('pkill', ['-TERM', '-f', 'tunnel_.*\\.toml'], () => {});
     } catch {}
+  }
+
+  hasCachedConfig(pkgVar, tunnelId) {
+    const numericId = Number(tunnelId);
+    const persistentConfigFile = path.join(pkgVar, 'data', 'configs', `tunnel_${numericId}.toml`);
+    return fs.existsSync(persistentConfigFile);
+  }
+
+  cleanCachedConfigs(pkgVar) {
+    const cfgDir = path.join(pkgVar, 'data', 'configs');
+    if (fs.existsSync(cfgDir)) {
+      try {
+        const files = fs.readdirSync(cfgDir);
+        for (const f of files) {
+          if (f.endsWith('.toml')) {
+            try { fs.unlinkSync(path.join(cfgDir, f)); } catch {}
+          }
+        }
+        console.log('[frpcManager] All persistent cached tunnel configurations cleared');
+      } catch (e) {
+        console.warn('[frpcManager] Failed to clean cached configs:', e.message);
+      }
+    }
   }
 
   getTunnelStatus(pkgVar, tunnelIds = []) {

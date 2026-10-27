@@ -62,6 +62,33 @@ function saveAppConfig(cfg) {
   }
 }
 
+function checkAccountSwitch(newUid, username) {
+  if (!newUid) return false;
+  const cfg = getAppConfig();
+  const lastUid = cfg.lastUid;
+  let switched = false;
+
+  if (lastUid && Number(lastUid) !== Number(newUid)) {
+    console.log(`[mslfrp-backend] Account switch detected: UID ${lastUid} -> UID ${newUid}. Terminating previous account tunnels...`);
+    // 1. Terminate all tunnels belonging to the previous account
+    frpcManager.stopAll(PKG_VAR);
+    // 2. Clear autostart list
+    saveAutostartList([]);
+    // 3. Clear cached persistent tunnel configurations
+    frpcManager.cleanCachedConfigs(PKG_VAR);
+    switched = true;
+  }
+
+  // Record active user UID
+  saveAppConfig({
+    ...cfg,
+    lastUid: Number(newUid),
+    lastUsername: username || cfg.lastUsername || ''
+  });
+
+  return switched;
+}
+
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
@@ -207,6 +234,12 @@ const server = http.createServer(async (req, res) => {
 
     if (apiPath === 'auth/verify' && req.method === 'GET') {
       const result = await cloudProxy.verifyToken(PKG_VAR);
+      if (result.code === 200 && result.data && result.data.userInfo) {
+        const switched = checkAccountSwitch(result.data.userInfo.uid, result.data.userInfo.username);
+        if (switched) {
+          result.data.accountSwitched = true;
+        }
+      }
       return sendJson(res, result.code, result);
     }
 
@@ -248,10 +281,14 @@ const server = http.createServer(async (req, res) => {
       if (!tunnelId || !/^\d+$/.test(String(tunnelId).trim())) {
         return sendJson(res, 400, { code: 400, msg: '缺少或非法的隧道 ID' });
       }
-      if (!userToken) return sendJson(res, 401, { code: 401, msg: '未登录或未配置 Token' });
+
+      const hasCached = frpcManager.hasCachedConfig(PKG_VAR, tunnelId);
+      if (!userToken && !hasCached) {
+        return sendJson(res, 401, { code: 401, msg: '未登录且无本地缓存配置，无法启动隧道' });
+      }
 
       try {
-        const result = await frpcManager.startTunnel(APP_DEST, PKG_VAR, userToken, tunnelId);
+        const result = await frpcManager.startTunnel(APP_DEST, PKG_VAR, userToken || '', tunnelId);
         return sendJson(res, 200, { code: 200, msg: '隧道启动成功', data: result });
       } catch (err) {
         return sendJson(res, 500, { code: 500, msg: `启动失败: ${err.message}` });
@@ -414,14 +451,13 @@ function runAutostartTunnels() {
       }
       const userToken = cloudProxy.getToken(PKG_VAR);
       if (!userToken) {
-        console.log('[mslfrp-backend] Autostart skipped: No user token found');
-        return;
+        console.log('[mslfrp-backend] Autostart: No active user token found, launching tunnels via persistent cached configs...');
       }
       console.log(`[mslfrp-backend] Executing autostart for ${autostartIds.length} tunnel(s)...`);
       for (const tunnelId of autostartIds) {
         try {
           console.log(`[mslfrp-backend] Autostarting tunnel ${tunnelId}...`);
-          await frpcManager.startTunnel(APP_DEST, PKG_VAR, userToken, tunnelId);
+          await frpcManager.startTunnel(APP_DEST, PKG_VAR, userToken || '', tunnelId);
           console.log(`[mslfrp-backend] Tunnel ${tunnelId} autostarted successfully.`);
         } catch (err) {
           console.error(`[mslfrp-backend] Failed to autostart tunnel ${tunnelId}:`, err.message);

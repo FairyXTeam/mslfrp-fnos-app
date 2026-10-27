@@ -365,7 +365,6 @@ class CloudProxy {
           }
         };
       } else {
-        this.clearToken(pkgVar);
         return { code: 401, msg: '登录已过期，请重新登录' };
       }
     } catch (err) {

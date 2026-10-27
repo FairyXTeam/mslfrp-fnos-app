@@ -113,7 +113,7 @@ function handleNav(id: string) {
           </div>
           <button
             type="button"
-            @click.stop="appStore.logout"
+            @click.stop="appStore.logout()"
             title="退出登录"
             class="text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 border-0 bg-transparent cursor-pointer transition-colors shrink-0"
           >
@@ -250,7 +250,7 @@ function handleNav(id: string) {
           </div>
           <button
             type="button"
-            @click.stop="appStore.logout"
+            @click.stop="appStore.logout()"
             title="退出登录"
             class="text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/80 border-0 bg-transparent cursor-pointer transition-colors"
           >
