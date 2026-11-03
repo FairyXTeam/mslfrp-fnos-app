@@ -1,10 +1,11 @@
 appname=mslfrp
-version=1.1.0
+version=1.1.1
 display_name=MSLFrp 内网映射
 desc=MSLFrp 内网映射是由「<a href="https://user.mslmc.net" target="_blank">FairyXTeam</a>」(MSL & MSLX 核心开发者) 与「<a href="https://aff-xicheny.mslmc.net/" target="_blank">广州兮辰云科技有限公司</a>」联合运营的内网映射服务。提供免费的基础映射节点服务，即开即用；同时提供付费节点等增值服务。(本应用为第三方应用,相关增值内容与飞牛无关)。<br><br>注意: 我们的主要服务为MC游戏穿透, <b>严禁穿透违法违规内容和大流量服务</b>。使用中国大陆节点前需要完成实名认证哦。
-changelog=1. 登录失效不影响隧道后台与自启动，换号自动终止前账号隧道；<br>2. 接入Token静默续期与后台每12小时守护保活机制；<br>3. 新增飞牛原生风格布局，完善深色主题适配与首屏防闪烁；<br>4. 仪表盘集成服务动态公告与弹窗提醒；<br>5. 退出登录增加二次确认弹窗。
+changelog=1. 声明系统运行环境依赖 install_dep_apps=nodejs_v22，解决未预装 Node.js 时应用无法启动的问题。<br>2. 启动脚本完善对官方 Node.js 运行时路径（/var/apps/nodejs_v22/target/bin）的优先级查找与缺失校验。<br>3. 隧道配置本地持久化，登录失效或未登录状态下不影响开机自启动。<br>4. 切换登录账号自动停止前账号运行中的隧道并重置自启配置。<br>5. 退出登录增加二次确认弹窗，确认退出后保持后台现有隧道继续运行。<br>6. 接入用户中心 Token 自动续期与后台定时守护保活机制。<br>7. 新增飞牛官方原生框架布局，支持在设置中与经典全宽视图无缝切换。<br>8. 深色模式颜色对齐标题栏背景（#0c0c0d），优化文档对比度并联动系统主题。<br>9. 外观与主题配置持久化至后端，结合本地预读消除首屏切换闪烁。<br>10. 仪表盘新增服务动态公告卡片与弹窗提醒，支持内容哈希防重复弹出。<br>11. 移动端登录与赚积分统一适配为小程序码，增加充值支付引导。<br>12. 新增穿透进程心跳检测保活与启动故障自诊断能力。<br>13. 将应用访问与操作权限限制为飞牛系统管理员可用。
 source=thirdparty
 platform=all
+install_dep_apps=nodejs_v22
 maintainer=FairyXTeam
 maintainer_url=https://user.mslmc.net
 distributor=小宇

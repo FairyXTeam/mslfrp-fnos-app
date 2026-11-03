@@ -1,16 +1,17 @@
 #!/bin/bash
 
-# Prefer system node or fnOS nodejs runtime
+# Prefer fnOS official nodejs runtime environment and system path
+export PATH="/var/apps/nodejs_v22/target/bin:/var/apps/nodejs_v22/bin:/var/apps/nodejs_v24/target/bin:/var/apps/nodejs_v20/target/bin:/opt/node/bin:/usr/local/bin:/usr/bin:$PATH"
+
 if ! command -v node >/dev/null 2>&1; then
     BASE_DIR="/var/apps"
-    for node_dir in "${BASE_DIR}/nodejs"*/target/bin "/opt/node/bin"; do
+    for node_dir in "${BASE_DIR}/nodejs"*/target/bin "${BASE_DIR}/nodejs"*/bin "/opt/node/bin"; do
         if [ -x "${node_dir}/node" ]; then
             export PATH="${node_dir}:$PATH"
             break
         fi
     done
 fi
-export PATH="/usr/local/bin:/usr/bin:$PATH"
 
 PID_FILE="${TRIM_PKGVAR}/server.pid"
 LOG_FILE="${TRIM_PKGVAR}/logs/server.log"
@@ -29,6 +30,13 @@ case "$1" in
 
         # Remove stale socket
         rm -f "$SOCKET_FILE"
+
+        # Check if node exists
+        if ! command -v node >/dev/null 2>&1; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] Node.js not found in PATH ($PATH). Please ensure nodejs_v22 is installed." >> "$LOG_FILE"
+            echo "Error: Node.js runtime not found. Please ensure nodejs_v22 is installed from App Center."
+            exit 1
+        fi
 
         # Start Node server listening on Unix socket
         export SOCKET_PATH="$SOCKET_FILE"

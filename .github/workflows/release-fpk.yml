@@ -40,7 +40,7 @@ jobs:
           # Strip leading 'v'
           VERSION="${RAW_TAG#v}"
           if [ -z "$VERSION" ]; then
-            VERSION="1.1.0"
+            VERSION="1.1.1"
           fi
           if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
             VERSION="${VERSION}.0"

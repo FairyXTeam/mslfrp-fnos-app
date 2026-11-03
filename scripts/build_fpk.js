@@ -150,6 +150,11 @@ for (const target of TARGETS) {
   // Ensure no os_min_version block
   targetManifest = targetManifest.replace(/^os_min_version=.*$/m, '').trim();
 
+  // Ensure install_dep_apps=nodejs_v22 is present
+  if (!targetManifest.match(/^install_dep_apps=.*$/m)) {
+    targetManifest += '\ninstall_dep_apps=nodejs_v22';
+  }
+
   // Inject or update changelog from CHANGELOGS.md
   const changelog = extractChangelogFromMd(version);
   if (changelog) {
